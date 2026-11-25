@@ -219,12 +219,14 @@
   }
 
   function seg(a,b,color,w,dash,alpha){
+    if(window.__S) window.__S.push({a:a,b:b,c:color,w:w||1});
     ctx.save();ctx.globalAlpha=alpha==null?1:alpha;
     ctx.strokeStyle=color;ctx.lineWidth=w||1.4;ctx.lineCap='round';
     if(dash)ctx.setLineDash(dash);
     ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore();
   }
   function arrow2(a,b,color,w,label,off){
+    if(window.__S) window.__S.push({a:a,b:b,c:color,w:w||1});
     const ang=Math.atan2(b.y-a.y,b.x-a.x);
     ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=w||2.8;ctx.lineCap='round';
     ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
@@ -240,10 +242,29 @@
     ctx.save();ctx.font='600 13px ui-monospace,Consolas,monospace';
     ctx.textAlign='center';ctx.textBaseline='middle';
     const tw=ctx.measureText(text).width;
-    let lx=Math.max(tw/2+8,Math.min(W-tw/2-8,x));
-    ctx.globalAlpha=.9;ctx.fillStyle='#0d0b07';
-    ctx.fillRect(lx-tw/2-6,y-11,tw+12,22);
-    ctx.globalAlpha=1;ctx.fillStyle=color;ctx.fillText(text,lx,y);ctx.restore();
+    const padX=8, padY=6, hh=13;
+    let lx=Math.max(tw/2+padX+4,Math.min(W-tw/2-padX-4,x));
+    const ly=Math.max(hh+3,Math.min(HT-hh-3,y));
+    // 底板不透明 + 细描边：文字与任何线之间都有一圈空隙
+    ctx.globalAlpha=1;ctx.fillStyle='#0e0b07';
+    ctx.fillRect(lx-tw/2-padX,ly-hh,tw+padX*2,hh*2);
+    ctx.globalAlpha=.5;ctx.strokeStyle=color;ctx.lineWidth=1;
+    ctx.strokeRect(lx-tw/2-padX+.5,ly-hh+.5,tw+padX*2-1,hh*2-1);
+    ctx.globalAlpha=1;ctx.fillStyle=color;ctx.fillText(text,lx,ly);ctx.restore();
+    if(window.__T) window.__T.push({x:lx-tw/2-padX,y:ly-hh,w:tw+padX*2,h:hh*2,t:text});
+  }
+  // 沿线段法线方向偏移，标签就不会骑在箭头上
+  function perpOff(a,b,d){
+    const dx=b.x-a.x, dy=b.y-a.y, L=Math.hypot(dx,dy)||1;
+    return [-dy/L*d, dx/L*d];
+  }
+  function midOff(a,b,t,d){
+    const dx=b.x-a.x, dy=b.y-a.y, L=Math.hypot(dx,dy)||1;
+    return [(a.x+dx*t)-dy/L*d, (a.y+dy*t)+dx/L*d];
+  }
+  function alongOff(a,b,d){
+    const dx=b.x-a.x, dy=b.y-a.y, L=Math.hypot(dx,dy)||1;
+    return [dx/L*d, dy/L*d];
   }
   function dotat(p,color,r){
     ctx.save();ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,r||3.6,0,7);ctx.fill();ctx.restore();
@@ -251,31 +272,33 @@
 
   // ---------------- ① 数轴 ----------------
   function scene1(){
-    const y=CY+40, x0=p2(-4.6,0).x, x1=p2(4.6,0).x;
-    seg({x:x0,y:y},{x:x1,y:y},'#6d6250',1.6);
-    // 箭头
-    arrow2({x:x1-14,y:y},{x:x1,y:y},'#6d6250',1.6,null,null);
+    const y=CY+46, xL=p2(-4.7,0).x, xR=p2(4.7,0).x;
+    seg({x:xL,y:y},{x:xR,y:y},'#6d6250',1.6);
+    arrow2({x:xR-16,y:y},{x:xR,y:y},'#6d6250',1.6,null,null);
     for(let i=-4;i<=4;i++){
       const px=p2(i,0).x;
       seg({x:px,y:y-6},{x:px,y:y+6},'#6d6250',1.2);
       ctx.save();ctx.font='11.5px ui-monospace,Consolas,monospace';
       ctx.fillStyle='#8a7b6c';ctx.textAlign='center';ctx.textBaseline='top';
-      ctx.fillText(String(i),px,y+9);ctx.restore();
+      ctx.fillText(String(i),px,y+10);ctx.restore();
     }
-    ctx.save();ctx.font='600 12px ui-monospace,Consolas,monospace';
-    ctx.fillStyle='#9b8d75';ctx.textAlign='left';ctx.textBaseline='bottom';
-    ctx.fillText('O',x0-4,y-8);ctx.restore();
 
-    const pP=p2(P1,0), pQ=p2(Q1,0);
-    // 向量 OP
-    arrow2({x:p2(0,0).x,y:y},pP,'#d9a441',3.2,'OP = ('+f2(P1)+')',[0,-22]);
-    // 点
-    dotat(pP,'#d9a441',5); tag(pP.x,pP.y+22,'P',( '#d9a441'));
-    dotat(pQ,'#7fa86b',5); tag(pQ.x,pQ.y+22,'Q','#7fa86b');
-    // 向量 PQ
-    seg(pP,pQ,'#7fa86b',2.2,[6,4],.95);
-    arrow2({x:pQ.x+(pP.x-pQ.x)*0.06,y:pQ.y},{x:pQ.x,y:pQ.y},'#7fa86b',2.2,null,null);
-    tag((pP.x+pQ.x)/2,(pP.y+pQ.y)/2-14,'PQ = ('+f2(Q1-P1)+')','#7fa86b');
+    const O={x:p2(0,0).x,y:y}, pP={x:p2(P1,0).x,y:y}, pQ={x:p2(Q1,0).x,y:y};
+    // 向量 OP：直接躺在数轴上，说明文字放到轴上方
+    arrow2(O,pP,'#d9a441',3.4,null);
+    tag((O.x+pP.x)/2, y-58, 'OP = ('+f2(P1)+')', '#d9a441');
+
+    // 向量 PQ：轴下方单独画一条跨度线，避免和数轴叠在一起
+    const by=y+42;
+    seg({x:pP.x,y:by},{x:pQ.x,y:by},'#7fa86b',2,[7,5],.95);
+    arrow2({x:pQ.x+(pP.x-pQ.x)*0.05,y:by},{x:pQ.x,y:by},'#7fa86b',2,null,null);
+    seg(pP,{x:pP.x,y:by},'#7fa86b',1,[3,3],.45);
+    seg(pQ,{x:pQ.x,y:by},'#7fa86b',1,[3,3],.45);
+    tag((pP.x+pQ.x)/2, by+28, 'PQ = Q − P = ('+f2(Q1-P1)+')', '#7fa86b');
+
+    dotat(pP,'#d9a441',5.5); dotat(pQ,'#7fa86b',5.5);
+    tag(pP.x, y-26,'P','#d9a441');
+    tag(pQ.x, y-26,'Q','#7fa86b');
 
     ro.innerHTML=
       '<div class="row"><span class="k">点 P 的坐标</span><span class="v">x = '+f2(P1)+'</span></div>'+
@@ -295,8 +318,8 @@
     seg(p2(0,-3.8),p2(0,4.2),'#6d6250',1.6);
     arrow2(p2(4.1,0),p2(4.4,0),'#6d6250',1.6,null,null);
     arrow2(p2(0,3.9),p2(0,4.2),'#6d6250',1.6,null,null);
-    tag(p2(4.4,0).x-10,p2(4.4,0).y+16,'x','#8a7b6c');
-    tag(p2(0,4.2).x+16,p2(0,4.2).y+8,'y','#8a7b6c');
+    tag(p2(4.4,0).x+16,p2(4.4,0).y+18,'x','#8a7b6c');
+    tag(p2(0,4.2).x+28,p2(0,4.2).y+4,'y','#8a7b6c');
     for(let i=-3;i<=3;i++){
       if(i===0) continue;
       ctx.save();ctx.font='10.5px ui-monospace,Consolas,monospace';
@@ -312,11 +335,11 @@
     seg(p2(Px,0),Pp,'#8a6f2e',1.4,[5,4],.9);
     seg(p2(0,0),p2(0,Py),'#8a6f2e',1.4,[5,4],.9);
     seg(p2(0,Py),Pp,'#8a6f2e',1.4,[5,4],.9);
-    tag(p2(Px/2,0).x,p2(Px/2,0).y+16,'x = '+f2(Px),'#8a6f2e');
-    tag(p2(0,Py/2).x+34,p2(0,Py/2).y,'y = '+f2(Py),'#8a6f2e');
+    tag(p2(Px*0.45,0).x,p2(Px*0.45,0).y+30,'x = '+f2(Px),'#8a6f2e');
+    tag(p2(0,Py*0.55).x-52,p2(0,Py*0.55).y,'y = '+f2(Py),'#8a6f2e');
     arrow2(p2(0,0),Pp,'#d9a441',3.2,'OP = ('+f2(Px)+', '+f2(Py)+')',[0,-24]);
     dotat(Pp,'#d9a441',5);
-    tag(Pp.x+16,Pp.y-10,'P','#d9a441');
+    tag(Pp.x+24,Pp.y+24,'P','#d9a441');
 
     ro.innerHTML=
       '<div class="row"><span class="k">点 P 的坐标</span><span class="v">('+f2(Px)+', '+f2(Py)+')</span></div>'+
@@ -339,7 +362,7 @@
   function axes3(){
     arrow2(proj([0,0,0]),proj([2.9,0,0]),'#e0b055',2.4,'x',[0,20]);
     arrow2(proj([0,0,0]),proj([0,2.9,0]),'#8fd08f',2.4,'y',[-22,8]);
-    arrow2(proj([0,0,0]),proj([0,0,2.9]),'#7fb8e0',2.4,'z',[-20,-10]);
+    arrow2(proj([0,0,0]),proj([0,0,2.9]),'#7fb8e0',2.4,'z',[-22,37]);
   }
   function scene3(){
     const P=S3.slice();
@@ -361,7 +384,7 @@
     }
     axes3();
     arrow2(proj([0,0,0]),proj(P),'#d9a441',3.2,null);
-    tag(proj(P).x,proj(P).y-18,'OP = ('+f2(P[0])+', '+f2(P[1])+', '+f2(P[2])+')','#d9a441');
+    tag(proj(P).x,proj(P).y-30,'OP = ('+f2(P[0])+', '+f2(P[1])+', '+f2(P[2])+')','#d9a441');
     dotat(proj(P),'#d9a441',5);
 
     let html=
@@ -372,9 +395,9 @@
       const Q=[0,2,-1];
       seg(proj(P),proj(Q),'#c86bd8',2.6,[6,4],.95);
       dotat(proj(Q),'#c86bd8',6);
-      tag(proj(Q).x,proj(Q).y-16,'Q','#c86bd8');
+      tag(proj(Q).x-18,proj(Q).y-22,'Q','#c86bd8');
       const PQ=sub(Q,P);
-      tag((proj(P).x+proj(Q).x)/2+30,(proj(P).y+proj(Q).y)/2+30,'PQ=('+f2(PQ[0])+','+f2(PQ[1])+','+f2(PQ[2])+')','#c86bd8');
+      tag(W-92,HT-30,'PQ=('+f2(PQ[0])+','+f2(PQ[1])+','+f2(PQ[2])+')','#c86bd8');
       html+='<div class="row"><span class="k">点 Q 的坐标</span><span class="v">('+Q.join(', ')+')</span></div>'+
             '<div class="row"><span class="k">向量 PQ = Q − P</span><span class="v">('+f2(PQ[0])+', '+f2(PQ[1])+', '+f2(PQ[2])+')</span></div>';
     }
@@ -387,8 +410,9 @@
     grid2();
     const u=U.slice(), v=V.slice();
     const uP=p2(u[0],u[1]), vP=p2(v[0],v[1]), o=p2(0,0);
-    arrow2(o,uP,'#d9a441',3.0,'u',[0,-18]);
-    arrow2(o,vP,'#6fa8d6',3.0,'v',[0,-18]);
+    arrow2(o,uP,'#d9a441',3.0,null,null);
+    arrow2(o,vP,'#6fa8d6',3.0,null,null);
+    tag(uP.x+19,uP.y+13,'u','#d9a441'); tag(vP.x-17,vP.y-13,'v','#6fa8d6');
     let html='';
 
     if(op==='add'){
@@ -396,7 +420,8 @@
       const wP=p2(w[0],w[1]);
       seg(uP,wP,'#6fa8d6',1.8,[6,4],.85);
       seg(vP,wP,'#d9a441',1.8,[6,4],.85);
-      arrow2(o,wP,'#c86bd8',3.4,'u+v = ('+f2(w[0])+', '+f2(w[1])+')',[0,-20]);
+      arrow2(o,wP,'#c86bd8',3.4,null,null);
+      tag(104,26,'u+v = ('+f2(w[0])+', '+f2(w[1])+')','#c86bd8');
       dotat(wP,'#c86bd8',4.5);
       html='<div class="row"><span class="k">u</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
            '<div class="row"><span class="k">v</span><span class="v">('+f2(v[0])+', '+f2(v[1])+')</span></div>'+
@@ -408,7 +433,8 @@
       const nv=p2(-v[0],-v[1]);
       arrow2(o,nv,'#6fa8d6',2.2,'−v',[0,18]);
       seg(nv,wP,'#6fa8d6',1.6,[6,4],.7);
-      arrow2(o,wP,'#c86bd8',3.4,'u−v = ('+f2(w[0])+', '+f2(w[1])+')',[0,-20]);
+      arrow2(o,wP,'#c86bd8',3.4,null,null);
+      tag(104,26,'u−v = ('+f2(w[0])+', '+f2(w[1])+')','#c86bd8');
       // u 到 v 末端的连线（u-v 也可看成从 v 指向 u）
       seg(vP,uP,'#7fa86b',1.8,[5,4],.8);
       dotat(wP,'#c86bd8',4.5);
@@ -421,7 +447,8 @@
       const w=[u[0]*K, u[1]*K];
       const wP=p2(w[0],w[1]);
       seg(o,wP,'#c86bd8',3.4,null,.95);
-      arrow2(o,wP,'#c86bd8',3.4,'k·u = ('+f2(w[0])+', '+f2(w[1])+')',[0,K<0?18:-20]);
+      arrow2(o,wP,'#c86bd8',3.4,null,null);
+      tag(104,26,'k·u = ('+f2(w[0])+', '+f2(w[1])+')','#c86bd8');
       html='<div class="row"><span class="k">u</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
            '<div class="row"><span class="k">k</span><span class="v">'+f2(K)+'</span></div>'+
            '<div class="row"><span class="k">|k| · |u|</span><span class="v">'+f2(Math.abs(K)*len(u))+'</span></div>'+
@@ -439,7 +466,8 @@
       const projv=[un[0]*ph, un[1]*ph];
       const pv=p2(projv[0],projv[1]);
       seg(vP,pv,'#7fa86b',1.6,[5,4],.9);
-      arrow2(o,pv,'#7fa86b',2.6,'v 在 u 上的投影',[0,18]);
+      arrow2(o,pv,'#7fa86b',2.6,null,null);
+      { tag(pv.x-52,o.y+42,'v 的投影','#7fa86b'); }
       seg(pv,vP,'#7fa86b',1.4,[4,4],.55);
       html='<div class="row"><span class="k">u = (x₁, y₁)</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
            '<div class="row"><span class="k">v = (x₂, y₂)</span><span class="v">('+f2(v[0])+', '+f2(v[1])+')</span></div>'+
@@ -453,6 +481,7 @@
     ro.innerHTML=html;
   }
 
+  window.__T=null;window.__S=null;
   function draw(){
     ctx.clearRect(0,0,W,HT);
     if(mode===0) scene1();
