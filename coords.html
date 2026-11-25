@@ -324,7 +324,9 @@
       if(i===0) continue;
       ctx.save();ctx.font='10.5px ui-monospace,Consolas,monospace';
       ctx.fillStyle='#7a6f5d';ctx.textAlign='center';ctx.textBaseline='top';
-      ctx.fillText(String(i),p2(i,0).x,p2(0,0).y+5);ctx.restore();
+      ctx.fillText(String(i),p2(i,0).x,p2(0,0).y+5);
+      ctx.textAlign='right';ctx.textBaseline='middle';
+      ctx.fillText(String(i),p2(0,0).x-9,p2(0,i).y);ctx.restore();
     }
   }
   function scene2(){
@@ -335,8 +337,8 @@
     seg(p2(Px,0),Pp,'#8a6f2e',1.4,[5,4],.9);
     seg(p2(0,0),p2(0,Py),'#8a6f2e',1.4,[5,4],.9);
     seg(p2(0,Py),Pp,'#8a6f2e',1.4,[5,4],.9);
-    tag(p2(Px*0.45,0).x,p2(Px*0.45,0).y+30,'x = '+f2(Px),'#8a6f2e');
-    tag(p2(0,Py*0.55).x-52,p2(0,Py*0.55).y,'y = '+f2(Py),'#8a6f2e');
+    tag(p2(Px,0).x,p2(Px,0).y+38,'x = '+f2(Px),'#8a6f2e');
+    tag(p2(0,Py).x-64,p2(0,Py).y,'y = '+f2(Py),'#8a6f2e');
     arrow2(p2(0,0),Pp,'#d9a441',3.2,'OP = ('+f2(Px)+', '+f2(Py)+')',[0,-24]);
     dotat(Pp,'#d9a441',5);
     tag(Pp.x+24,Pp.y+24,'P','#d9a441');
@@ -411,8 +413,9 @@
     const u=U.slice(), v=V.slice();
     const uP=p2(u[0],u[1]), vP=p2(v[0],v[1]), o=p2(0,0);
     arrow2(o,uP,'#d9a441',3.0,null,null);
-    arrow2(o,vP,'#6fa8d6',3.0,null,null);
-    tag(uP.x+19,uP.y+13,'u','#d9a441'); tag(vP.x-17,vP.y-13,'v','#6fa8d6');
+    if(op!=='mul') arrow2(o,vP,'#6fa8d6',3.0,null,null);
+    tag(uP.x+19,uP.y+13,'u','#d9a441');
+    if(op!=='mul') tag(vP.x+20,vP.y-20,'v','#6fa8d6');
     let html='';
 
     if(op==='add'){
@@ -431,23 +434,34 @@
       const w=[u[0]-v[0], u[1]-v[1]];
       const wP=p2(w[0],w[1]);
       const nv=p2(-v[0],-v[1]);
+      // ① 从原点画出 −v
       arrow2(o,nv,'#6fa8d6',2.2,'−v',[0,18]);
-      seg(nv,wP,'#6fa8d6',1.6,[6,4],.7);
+      // ② 首尾相连：把同一个 −v 接到 u 的末端
+      seg(uP,wP,'#6fa8d6',2.4,[7,5],.95);
+      arrow2({x:wP.x+(uP.x-wP.x)*0.05,y:wP.y+(uP.y-wP.y)*0.05},wP,'#6fa8d6',2.4,null,null);
+      { const lo=perpOff(uP,wP,-62); tag((uP.x+wP.x)/2+lo[0],(uP.y+wP.y)/2+lo[1],'−v','#6fa8d6'); }
+      // ③ 起点到终点：结果向量
       arrow2(o,wP,'#c86bd8',3.4,null,null);
       tag(104,26,'u−v = ('+f2(w[0])+', '+f2(w[1])+')','#c86bd8');
-      // u 到 v 末端的连线（u-v 也可看成从 v 指向 u）
+      // 另一种读法：从 v 的末端指向 u 的末端
       seg(vP,uP,'#7fa86b',1.8,[5,4],.8);
       dotat(wP,'#c86bd8',4.5);
       html='<div class="row"><span class="k">u</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
            '<div class="row"><span class="k">v</span><span class="v">('+f2(v[0])+', '+f2(v[1])+')</span></div>'+
            '<div class="row"><span class="k">u−v = u+(−v)</span><span class="v">('+f2(w[0])+', '+f2(w[1])+')</span></div>'+
-           '<div class="row"><span class="k">也从 v 的末端指向 u 的末端</span><span class="v">同样是 ('+f2(w[0])+', '+f2(w[1])+')</span></div>';
-      vd.textContent='减法：u−v = u + (−v)。几何上就是从 v 的末端连到 u 的末端，方向指向 u。';
+           '<div class="row"><span class="k">另一种读法：从 v 的末端指向 u 的末端</span><span class="v">同样是 ('+f2(w[0])+', '+f2(w[1])+')</span></div>';
+      vd.textContent='减法：首尾相连——从 O 走到 u，再接一段 −v，终点就是 u−v。';
     }else if(op==='mul'){
       const w=[u[0]*K, u[1]*K];
       const wP=p2(w[0],w[1]);
-      seg(o,wP,'#c86bd8',3.4,null,.95);
-      arrow2(o,wP,'#c86bd8',3.4,null,null);
+      if(Math.abs(K)<0.05){
+        dotat(o,'#c86bd8',6);
+        tag(o.x+76,o.y+34,'k=0 → 零向量','#c86bd8');
+      }else{
+        // 和 u 共线：画成虚线，免得把金色的 u 整个盖住
+        seg(o,wP,'#c86bd8',4,[9,7],.95);
+        arrow2({x:o.x+(wP.x-o.x)*0.88,y:o.y+(wP.y-o.y)*0.88},wP,'#c86bd8',4,null,null);
+      }
       tag(104,26,'k·u = ('+f2(w[0])+', '+f2(w[1])+')','#c86bd8');
       html='<div class="row"><span class="k">u</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
            '<div class="row"><span class="k">k</span><span class="v">'+f2(K)+'</span></div>'+
@@ -521,6 +535,12 @@
       document.querySelectorAll('.chip[data-op]').forEach(x=>x.classList.remove('on'));
       el.classList.add('on'); op=el.dataset.op;
       document.getElementById('krow').style.display = op==='mul'?'':'none';
+      // 数乘只用到 u：把 v 的两个滑块淡出，避免误以为 v 也参与运算
+      ['vx','vy'].forEach(id=>{
+        const e2=document.getElementById(id); if(!e2) return;
+        e2.disabled=(op==='mul');
+        e2.parentElement.style.display=(op==='mul'?'none':'');
+      });
       draw();
     });
   });
