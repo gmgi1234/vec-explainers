@@ -608,7 +608,7 @@ function viewDoc(doc) {
       + '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;margin-bottom:8px">'
       +   '<strong style="font-size:15px">' + esc(d.title) + '</strong>'
       +   '<span style="opacity:.62;font-size:12px">' + esc(d.sub) + '</span>'
-      +   '<a href="' + d.url + '" target="_blank" rel="noopener" style="margin-left:auto;font-size:13px;text-decoration:none">全屏打开 ↗</a>'
+      +   '<a href="' + d.url.replace(/[?&]embed=1/, '') + '" target="_blank" rel="noopener" style="margin-left:auto;font-size:13px;text-decoration:none">全屏打开 ↗</a>'
       + '</div>'
       + '<iframe data-auto="1" src="' + d.url + '" loading="lazy" title="' + esc(d.title) + '" allowfullscreen'
       +   ' style="width:100%;height:' + (d.h || 620) + 'px;border:0;border-radius:14px;background:#0e0b07;display:block"></iframe>'
