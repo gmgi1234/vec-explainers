@@ -159,7 +159,7 @@
   function proj(p){
     const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
     const x=p[0]*cy-p[1]*sy,y=p[0]*sy+p[1]*cy;
-    return {x:CX+x*S,y:CY+(y*sp-p[2]*cp)*S,d:y*cp+p[2]*sp};
+    return {x:CX+x*S,y:CY+(-y*sp-p[2]*cp)*S,d:y*cp+p[2]*sp};
   }
   function line(p,q,color,w,dash){
     const a=proj(p),b=proj(q);
