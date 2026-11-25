@@ -24,7 +24,12 @@
   @media(max-width:880px){canvas{height:420px}h1{font-size:20px}}
   .hint{position:absolute;left:11px;bottom:9px;font-size:11.5px;color:#7d715c;
     font-family:ui-monospace,Consolas,monospace}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:13px 0 4px}
+  .tabs{display:flex;gap:8px;margin:14px 0 6px;flex-wrap:wrap}
+  .tab{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;padding:8px 13px;
+    border-radius:999px;border:1px solid #332a1e;background:#1a150f;color:var(--dim);
+    cursor:pointer;user-select:none;transition:.16s}
+  .tab.on{background:var(--a);border-color:var(--a);color:#14110c}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
   .chip{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;padding:7px 12px;
     border-radius:999px;border:1px solid #332a1e;background:#1a150f;color:var(--dim);
     cursor:pointer;user-select:none;transition:.16s}
@@ -60,74 +65,94 @@
 <body>
 <div class="wrap">
   <h1>一根钉子：面积、体积、方向，一次看完</h1>
-  <p class="lede">六样东西都画在一起：a、b、a×b、c、(a×b)×c、体积六面体，外加两张平面。下面每个按钮都能单独开关。</p>
+  <p class="lede">a、b 在地面上 → <b>a×b</b> 立起来（长度就是面积）；再配 c，叉乘得方向，点乘得体积。三个标签各讲一件事。</p>
 
   <div class="stage">
     <canvas id="cv"></canvas>
     <div class="hint">拖动旋转</div>
   </div>
 
-  <div class="chips">
-    <div class="chip on" data-k="A">a</div>
-    <div class="chip on" data-k="B">b</div>
-    <div class="chip on" data-k="N">a×b</div>
-    <div class="chip on" data-k="C">c</div>
-    <div class="chip on p" data-k="W">(a×b)×c</div>
-    <div class="chip on" data-k="BOX">体积六面体 (a×b)·c</div>
-    <div class="chip on" data-k="PAB">平面(a,b)</div>
-    <div class="chip" data-k="PNC">平面｛a×b, c｝</div>
-    <div class="chip on" data-k="H">c 的高度</div>
+  <div class="tabs">
+    <div class="tab on" data-mode="0">① 六样东西</div>
+    <div class="tab" data-mode="1">② 剪切：斜推不涨体积</div>
+    <div class="tab" data-mode="2">③ 换底：循环置换</div>
   </div>
 
-  <div class="ctrl">
-    <label>c 的高度 h</label>
-    <input type="range" id="sh" min="0" max="2.6" step="0.05" value="2">
-    <span class="val" id="vh" style="color:var(--c)">2.00</span>
+  <div id="p0">
+    <div class="chips">
+      <div class="chip on" data-k="A">a</div>
+      <div class="chip on" data-k="B">b</div>
+      <div class="chip on" data-k="N">a×b</div>
+      <div class="chip on" data-k="C">c</div>
+      <div class="chip on p" data-k="W">(a×b)×c</div>
+      <div class="chip on" data-k="BOX">体积六面体</div>
+      <div class="chip on" data-k="PAB">平面(a,b)</div>
+      <div class="chip" data-k="PNC">平面｛a×b, c｝</div>
+    </div>
+    <div class="ctrl"><label>c 的高度 h</label>
+      <input type="range" id="sh" min="0" max="2.6" step="0.05" value="2">
+      <span class="val" id="vh" style="color:var(--c)">2.00</span></div>
+    <div class="ctrl"><label>c 在地面内转</label>
+      <input type="range" id="sa" min="0" max="6.283" step="0.01" value="0.5">
+      <span class="val" id="va" style="color:var(--c)">29°</span></div>
+    <div class="ctrl"><label>(a×b)×c 抬离地面</label>
+      <input type="range" id="sl" min="0" max="1.8" step="0.02" value="0">
+      <span class="val" id="vl" style="color:var(--m)">0.00</span></div>
   </div>
-  <div class="ctrl">
-    <label>c 在地面内转</label>
-    <input type="range" id="sa" min="0" max="6.283" step="0.01" value="0.5">
-    <span class="val" id="va" style="color:var(--c)">29°</span>
+
+  <div id="p1" style="display:none">
+    <p class="lede" style="margin:6px 0 8px">把 c 拆成两截：<span class="gl3">竖直的那截</span>（真正抬高度）和 <span class="gl">贴地的那截</span>（只是斜着推）。</p>
+    <div class="ctrl"><label>c 的高度 h</label>
+      <input type="range" id="sh2" min="0" max="2.6" step="0.05" value="1.6">
+      <span class="val" id="vh2" style="color:var(--c)">1.60</span></div>
+    <div class="ctrl"><label>贴地那截的长度</label>
+      <input type="range" id="sm" min="0" max="1.8" step="0.02" value="0.2">
+      <span class="val" id="vm" style="color:var(--a)">0.20</span></div>
   </div>
-  <div class="ctrl">
-    <label>(a×b)×c 抬离地面</label>
-    <input type="range" id="sl" min="0" max="1.8" step="0.02" value="0">
-    <span class="val" id="vl" style="color:var(--m)">0.00</span>
+
+  <div id="p2" style="display:none">
+    <p class="lede" style="margin:6px 0 8px">同一个六面体，换一面朝下当底。底面积变了、高也变了，<b>乘起来不变</b>。</p>
+    <div class="chips">
+      <div class="chip on" data-base="0">底 = a、b</div>
+      <div class="chip" data-base="1">底 = b、c</div>
+      <div class="chip" data-base="2">底 = c、a</div>
+    </div>
+    <div class="ctrl"><label>c 的高度 h</label>
+      <input type="range" id="sh3" min="0.4" max="2.6" step="0.05" value="1.8">
+      <span class="val" id="vh3" style="color:var(--c)">1.80</span></div>
+    <div class="ctrl"><label>c 在地面内转</label>
+      <input type="range" id="sa3" min="0" max="6.283" step="0.01" value="1.1">
+      <span class="val" id="va3" style="color:var(--c)">63°</span></div>
   </div>
 
   <div class="read" id="ro"></div>
   <div class="verdict" id="vd"></div>
 
   <div class="note">
-    <h2>① 画面里都有什么</h2>
-    <p><span class="gl">a、b</span> 在地面上，它们围出的平行四边形就是<b>面积</b>。<span class="gl3">n = a×b</span> 竖直立起来，长度等于这块面积——它是“面积加朝向”钉在一起的一根钉子。</p>
-    <p><span class="gl2">c</span> 斜着离开地面，<span class="gl4">(a×b)×c</span> 由 n 和 c 叉出来。半透明的六面体是 <span class="gl">(a×b)·c</span>：<b>面积 × 高 = 体积</b>。</p>
-
-    <div class="warn">
-      <b class="gl4">钉子 × c</b>（叉乘）→ 向量，必须垂直于 n，所以只能<b>在地面方向上</b>；c 抬多高它都不变。<br>
-      <b class="gl">钉子 · c</b>（点乘）→ 一个<b>数</b>，专门取“c 升起来多少”，面积乘它就是体积。
-    </div>
-
-    <p>画面里有两张平面，别搞混：<b class="gl">平面(a,b)</b> 的法线是 a×b；<b class="gl2">平面｛a×b, c｝</b> 的法线是 (a×b)×c。后一张张在 n 和 c 上，而 n 垂直于前一张——所以这两张平面<b>互相垂直</b>，(a×b)×c 作为后者的法线，自然就躺在平面(a,b)里。</p>
-
-    <h2>② 叉乘为什么给不了体积</h2>
-    <p><b>量纲：</b>|a×b| 是长度²（面积），体积是长度³，少一次乘法就永远差一个量纲。</p>
-    <p><b>方向：</b>三维里“垂直于 n”不是一个方向，而是<b>整整一张平面</b>——拉“抬离地面”那个滑块，它会升空，但方向一个字不改。</p>
-    <p>所以准确的说法是：(a×b)×c <b>平行于</b>地面，而不是“落在”地面上。只有从原点画出来时，它才恰好铺在那张面上。</p>
-
-    <h2>③ 平行于平面 ≠ 在平面上</h2>
-    <p>向量没有位置，只有方向和长度；点是位置，没有方向。所以对向量只能说“平行于某个平面”，对点才能说“在这个平面上”。</p>
+    <h2>② 斜推不涨体积：只有“抬起来”那截算数</h2>
+    <p>六面体可以看成<b>底面沿 c 扫出来</b>的。c 有两截：</p>
+    <p><span class="gl3">竖直那截</span>（垂直于底面）→ 真的把底面抬起来 → 贡献体积。<br>
+    <span class="gl">贴地那截</span>（躺在底面里）→ 只是把底面斜着推 → 底面积不变、高也不变 → <b>一点都不贡献</b>。</p>
     <div class="ok">
-      <b class="gl5">直线与平面的两条判定，差别就在这一点</b><br>
-      直线 ∥ 平面：s·n = 0，<b>且</b>直线上一点不在平面上<br>
-      直线在平面上：s·n = 0，<b>且</b>直线上一点在平面上
+      所以体积只认 <b>|a×b| × (c 的竖直分量)</b>。贴地那截拉多长都白搭——这就是“剪切不变体积”，几何里叫祖暅原理。
     </div>
 
-    <h2>④ 记住这一句</h2>
-    <p>叉乘管<b>方向</b>，点乘管<b>投影</b>。想要体积，必须是“面积 × 高”，所以只能走点乘那条路。</p>
+    <h2>③ 换一面当底，体积不变</h2>
+    <p>同一个六面体有三组面，随便挑一面当底，都是“底面积 × 高”：</p>
+    <p><b class="gl">(a×b)·c</b>　以 a、b 那张面为底，c 的竖直分量为高<br>
+    <b class="gl2">(b×c)·a</b>　换成 b、c 那张面为底，a 的竖直分量为高<br>
+    <b class="gl4">(c×a)·b</b>　再换成 c、a 那张面为底，b 的竖直分量为高</p>
+    <div class="warn">
+      <b>底面积不同，高也不同，乘出来是同一个数</b>——因为它们量的是同一个六面体。<br>
+      这就是 <b>(a×b)·c = (b×c)·a = (c×a)·b</b>：循环置换，值不变。
+    </div>
+    <p>但顺序一反就翻符号：<b>(b×a)·c = −(a×b)·c</b>。所以这是“<b>有向</b>体积”，正负表示 a、b、c 组成的是右手系还是左手系。</p>
+
+    <h2>④ 一句话记住</h2>
+    <p>叉乘管<b>面积</b>（带朝向的底），点乘管<b>投影</b>（高），相乘就是<b>体积</b>。而底可以换着挑，所以三个循环写法是同一个数。</p>
   </div>
 
-  <footer>拖动旋转 · 三个开关控制显示，三个滑块控制 c 与 (a×b)×c</footer>
+  <footer>拖动旋转 · 三个标签：六样东西 / 剪切 / 换底</footer>
 </div>
 
 <script>
@@ -140,12 +165,13 @@
   const mul=(u,k)=>[u[0]*k,u[1]*k,u[2]*k];
   const len=u=>Math.hypot(u[0],u[1],u[2]);
   const norm=u=>{const L=len(u)||1;return mul(u,1/L)};
-  const N=[0,0,1];
 
-  const A=[1.3,0,0], B=[0,1.15,0];
-  const NAB=cross(A,B);                 // 竖直，长度 = 面积
+  const A=[1.3,0,0], B=[0,1.15,0], NAB=cross(A,B);
   let H=2.0, angC=0.5, lift=0;
-  const F={A:true,B:true,N:true,C:true,W:true,BOX:true,PAB:true,PNC:false,H:true};
+  let H2=1.6, M2=0.2;
+  let H3=1.8, angC3=1.1, baseSel=0;
+  let mode=0;
+  const F={A:true,B:true,N:true,C:true,W:true,BOX:true,PAB:true,PNC:false};
 
   let yaw=-0.18,pitch=0.50,zoom=1,W=0,HT=0,S=1,CX=0,CY=0;
 
@@ -197,17 +223,34 @@
     ctx.beginPath();ctx.moveTo(pr[0].x,pr[0].y);
     for(let i=1;i<pr.length;i++)ctx.lineTo(pr[i].x,pr[i].y);
     ctx.closePath();ctx.fillStyle=fill;ctx.fill();
-    if(stroke){ctx.globalAlpha=1;ctx.strokeStyle=stroke;ctx.lineWidth=1.1;ctx.stroke();}
+    if(stroke){ctx.globalAlpha=1;ctx.strokeStyle=stroke;ctx.lineWidth=1.2;ctx.stroke();}
     ctx.restore();
   }
   function dot2(p,color,r){
     const q=proj(p);ctx.save();ctx.fillStyle=color;
     ctx.beginPath();ctx.arc(q.x,q.y,r||3.4,0,7);ctx.fill();ctx.restore();
   }
-  // 地面上从 a 转到 b 的弧 + 箭头，示意右手定则
+  function grid(){
+    ctx.save();ctx.globalAlpha=.2;
+    for(let i=-2;i<=3;i++){
+      line([i,-2,0],[i,3,0],'#4a3f2c',1);
+      line([-2,i,0],[3,i,0],'#4a3f2c',1);
+    }
+    ctx.restore();
+  }
+  function curC(){
+    if(mode===1) return [M2*Math.cos(0.9),M2*Math.sin(0.9),H2];
+    if(mode===2) return [0.95*Math.cos(angC3),0.95*Math.sin(angC3),H3];
+    return [0.95*Math.cos(angC),0.95*Math.sin(angC),H];
+  }
+  function drawBox(c,alpha,dash,col){
+    const O=[0,0,0],AB=add(A,B),AC=add(A,c),BC=add(B,c),ABC=add(AB,c);
+    const edges=[[O,A],[O,B],[O,c],[A,AB],[A,AC],[B,AB],[B,BC],[c,AC],[c,BC],[AB,ABC],[AC,ABC],[BC,ABC]];
+    edges.forEach(e=>line(e[0],e[1],col||'#7d6a48',dash?1.2:1.1,dash||null,alpha));
+  }
   function rhArc(){
-    const r0=0.60, steps=26;
-    const a0=Math.atan2(A[1],A[0]), a1=Math.atan2(B[1],B[0]);
+    const r0=0.60,steps=26;
+    const a0=Math.atan2(A[1],A[0]),a1=Math.atan2(B[1],B[0]);
     ctx.save();ctx.strokeStyle='#e0a24b';ctx.globalAlpha=.9;ctx.lineWidth=2.2;
     ctx.beginPath();
     for(let i=0;i<=steps;i++){
@@ -224,76 +267,45 @@
     ctx.lineTo(p1.x-12*Math.cos(ang3-0.42),p1.y-12*Math.sin(ang3-0.42));
     ctx.lineTo(p1.x-12*Math.cos(ang3+0.42),p1.y-12*Math.sin(ang3+0.42));
     ctx.closePath();ctx.fill();ctx.restore();
-    const pm=proj([r0*0.92*Math.cos((a0+a1)/2), r0*0.92*Math.sin((a0+a1)/2), 0]);
+    const pm=proj([r0*0.92*Math.cos((a0+a1)/2),r0*0.92*Math.sin((a0+a1)/2),0]);
     ctx.save();ctx.font='600 12px ui-monospace,Consolas,monospace';
     ctx.fillStyle='#e0a24b';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText('a → b', pm.x, pm.y+2);ctx.restore();
+    ctx.fillText('a → b',pm.x,pm.y+2);ctx.restore();
   }
 
-  function ground(){
-    ctx.save();ctx.globalAlpha=.2;
-    for(let i=-2;i<=3;i++){
-      line([i,-2,0],[i,3,0],'#4a3f2c',1);
-      line([-2,i,0],[3,i,0],'#4a3f2c',1);
+  const ro=document.getElementById('ro'), vd=document.getElementById('vd');
+
+  function scene0(){
+    const c=curC();
+    if(F.PNC){
+      const u=norm(NAB);
+      const v0=sub(c,mul(u,dot(c,u)));
+      if(len(v0)>1e-6){
+        const v=norm(v0),L=1.75;
+        quad([add(mul(u,L),mul(v,L)),add(mul(u,-L),mul(v,L)),
+              add(mul(u,-L),mul(v,-L)),add(mul(u,L),mul(v,-L))],'#6fa8d6',.12,'#3f6c92');
+      }
     }
-    ctx.restore();
-  }
-
-  // 由 a×b 与 c 张成的平面（它的法线正是 (a×b)×c）
-  function planeNC(c){
-    const u=norm(NAB);
-    let v0=sub(c,mul(u,dot(c,u)));
-    if(len(v0)<1e-6) return;
-    const v=norm(v0), L=1.75;
-    const p1=add(mul(u,L),mul(v,L)), p2=add(mul(u,-L),mul(v,L));
-    const p3=add(mul(u,-L),mul(v,-L)), p4=add(mul(u,L),mul(v,-L));
-    quad([p1,p2,p3,p4],'#6fa8d6',.12,'#3f6c92');
-  }
-
-  function draw(){
-    ctx.clearRect(0,0,W,HT);
-
-    const c=[0.95*Math.cos(angC),0.95*Math.sin(angC),H];
-    if(F.PNC) planeNC(c);
-    ground();
+    grid();
     if(F.PAB) quad([[-2,-2,0],[3,-2,0],[3,3,0],[-2,3,0]],'#c9a227',.09,'#8a6f2e');
-
-    // 六面体（体积）
-    if(F.BOX){
-      const O=[0,0,0],AB=add(A,B),AC=add(A,c),BC=add(B,c),ABC=add(AB,c),C=c;
-      const edges=[[O,A],[O,B],[O,C],[A,AB],[A,AC],[B,AB],[B,BC],[C,AC],[C,BC],[AB,ABC],[AC,ABC],[BC,ABC]];
-      edges.forEach(e=>line(e[0],e[1],'#7d6a48',1.1,null,.55));
-    }
-
-    // 面积平行四边形
+    if(F.BOX) drawBox(c,.55);
     if(F.PAB) quad([[0,0,0],A,add(A,B),B],'#d9a441',.13,'#8a6f2e');
-
-    // a、b
     if(F.A) arrow([0,0,0],A,'#d9a441',2.6,'a',[4,16]);
     if(F.B) arrow([0,0,0],B,'#c9b46b',2.6,'b',[-16,8]);
-
-    // n = a×b
-    if(F.N){ rhArc(); arrow([0,0,0],mul(norm(NAB),1.5),'#e0654b',3.0,'n = a×b',[-6,-14]); }
-
-    // c 的高度线（点乘取的就是这个投影）
-    if(F.H && H>0.02){
-      line([c[0],c[1],0],c,'#e0654b',1.8,[6,5],.9);
+    if(F.N){ rhArc(); arrow([0,0,0],mul(norm(NAB),1.5),'#e0654b',3.0,'a×b',[-6,-14]); }
+    if(c[2]>0.02){
+      line([c[0],c[1],0],c,'#e0654b',1.8,[6,5],.85);
       const m=proj(mul(add([c[0],c[1],0],c),.5));
       ctx.save();ctx.font='600 12.5px ui-monospace,Consolas,monospace';
       ctx.fillStyle='#e0654b';ctx.textAlign='left';ctx.textBaseline='middle';
-      const t='高度 h = '+H.toFixed(2),tw=ctx.measureText(t).width;
+      const t='高度 h = '+c[2].toFixed(2),tw=ctx.measureText(t).width;
       ctx.fillText(t,Math.min(W-tw-12,m.x+8),m.y);ctx.restore();
     }
-
-    // c
     if(F.C) arrow([0,0,0],c,'#6fa8d6',3.0,'c',[14,-10]);
-
-    // (a×b)×c
     if(F.W){
       const wv=cross(NAB,c);
       if(len(wv)>1e-9){
-        const wd=mul(norm(wv),1.5);
-        const P=[0,0,lift];
+        const wd=mul(norm(wv),1.5),P=[0,0,lift];
         if(lift>0.02){
           line([0,0,0],P,'#6d5f45',1.6,[5,5],.9);
           const m=proj(mul(P,.5));
@@ -306,23 +318,109 @@
         arrow(P,add(P,wd),'#c86bd8',3.4,'(a×b)×c',[0,18]);
       }
     }
-
-    const po=proj([0,0,0]);
-    ctx.save();ctx.fillStyle='#e8dcc4';ctx.beginPath();ctx.arc(po.x,po.y,3,0,7);ctx.fill();ctx.restore();
-
-    // 读数
-    const area=len(NAB), vol=dot(NAB,c);
-    const wv=cross(NAB,c);
-    document.getElementById('ro').innerHTML=
+    const area=len(NAB), vol=dot(NAB,c), wv=cross(NAB,c);
+    ro.innerHTML=
       '<div class="row"><span class="k">|a×b|　面积</span><span class="v">'+area.toFixed(2)+'　（固定）</span></div>'+
-      '<div class="row"><span class="k">c 的高度 h</span><span class="v">'+H.toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k">c 的高度 h</span><span class="v">'+c[2].toFixed(2)+'</span></div>'+
       '<div class="row"><span class="k">(a×b)·c　体积</span><span class="v">'+vol.toFixed(2)+'　（随 h 变）</span></div>'+
       '<div class="row"><span class="k">(a×b)×c　竖直分量</span><span class="v">'+(len(wv)>1e-9?Math.abs(norm(wv)[2]).toFixed(2):'—')+'　（恒为 0）</span></div>'+
       '<div class="row"><span class="k">(a×b)×c　起点离地</span><span class="v">'+lift.toFixed(2)+'</span></div>';
-
-    document.getElementById('vd').textContent = lift<0.02
+    vd.textContent = lift<0.02
       ? '体积随 h 变、叉乘结果纹丝不动。(a×b)×c 从原点画出来时正好贴地——像"在平面上"，其实只是"平行于平面"。'
       : '(a×b)×c 被抬到空中了，竖直分量仍是 0、方向一点没变：它一直平行于地面，但不再"落"在那张面上。';
+  }
+
+  function scene1(){
+    const cIn=[M2*Math.cos(0.9),M2*Math.sin(0.9),0];
+    const cUp=[0,0,H2];
+    const c=add(cIn,cUp);
+    grid();
+    quad([[-2,-2,0],[3,-2,0],[3,3,0],[-2,3,0]],'#c9a227',.08,'#8a6f2e');
+    // 参照：同一高度、不斜推的柱体（虚线）
+    if(M2>0.06) drawBox([0,0,H2],.38,[5,5],'#8f7c55');
+    drawBox(c,M2>0.06?.75:.55);
+    quad([[0,0,0],A,add(A,B),B],'#d9a441',.15,'#8a6f2e');
+    arrow([0,0,0],A,'#d9a441',2.4,null,null);
+    arrow([0,0,0],B,'#c9b46b',2.4,null,null);
+    // 贴地那截：换绿色，和底面的金色区分开
+    arrow([0,0,0],cIn,'#7fa86b',3.4,M2>0.06?'贴地那截（斜推）':'贴地那截 = 0',[-20,22]);
+    if(H2>0.02){
+      line(cIn,add(cIn,cUp),'#e0654b',2.2,[7,5],.95);
+      const m=proj(mul(add(cIn,add(cIn,cUp)),.5));
+      ctx.save();ctx.font='600 12.5px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#e0654b';ctx.textAlign='left';ctx.textBaseline='middle';
+      const tt='竖直那截 h='+H2.toFixed(2),tw=ctx.measureText(tt).width;
+      ctx.fillText(tt,Math.min(W-tw-12,m.x+8),m.y);ctx.restore();
+    }
+    arrow([0,0,0],mul(norm(NAB),1.35),'#e0654b',2.6,'a×b',[-46,-10]);
+    arrow([0,0,0],c,'#6fa8d6',3.2,'c',[10,-12]);
+    line(c,cIn,'#6d5f45',1.4,[4,4],.8);
+    dot2(cIn,'#d9a441',3.6);
+
+    const area=len(NAB), vol=Math.abs(dot(NAB,c));
+    ro.innerHTML=
+      '<div class="row"><span class="k">底面积 |a×b|</span><span class="v">'+area.toFixed(2)+'　（不变）</span></div>'+
+      '<div class="row"><span class="k">竖直那截（高）</span><span class="v">'+H2.toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k">贴地那截</span><span class="v">'+M2.toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k">体积 = 面积 × 高</span><span class="v">'+vol.toFixed(2)+'</span></div>';
+    vd.textContent='拉"贴地那截"：六面体明显被推歪了，可底面积没变、高也没变，体积读数一动不动。只有高度那一栏能改体积。';
+  }
+
+  function scene2(){
+    const c=curC();
+    grid();
+    drawBox(c,.45);
+    const pairs=[[A,B,'#d9a441'],[B,c,'#6fa8d6'],[c,A,'#c86bd8']];
+    const names=['底 = a、b','底 = b、c','底 = c、a'];
+    pairs.forEach((p,i)=>{
+      const [u,v,col]=p;
+      if(i!==baseSel) quad([[0,0,0],u,add(u,v),v],col,.05,col);
+    });
+    const [u,v,col]=pairs[baseSel];
+    quad([[0,0,0],u,add(u,v),v],col,.34,col);
+    const nv=cross(u,v);
+    const au=len(nv)||1e-9;
+    const center=mul(add(u,v),.5);
+    arrow(center,add(center,mul(norm(nv),1.15)),col,3.0,'法线',[0,-14]);
+    const third=[c,A,B][baseSel];
+    arrow([0,0,0],u,col,2.4,null,null);
+    arrow([0,0,0],v,col,2.4,null,null);
+    arrow([0,0,0],third,'#e8dcc4',2.4,'',null);
+    const hgt=Math.abs(dot(third,nv)/au);
+    const foot=add(third,mul(norm(nv),-dot(third,norm(nv))));
+    line(third,foot,'#e0654b',2.8,null,.95);
+    dot2(foot,'#e0654b',4);
+    const hm=proj(mul(add(third,foot),.5));
+    ctx.save();ctx.font='600 12.5px ui-monospace,Consolas,monospace';
+    ctx.fillStyle='#e0654b';ctx.textAlign='left';ctx.textBaseline='middle';
+    const ht='高 '+hgt.toFixed(2), hw=ctx.measureText(ht).width;
+    ctx.fillText(ht,Math.min(W-hw-12,hm.x+9),hm.y);ctx.restore();
+    if(hgt>0.05){
+      const u1=norm(sub(third,foot)), v1=norm(cross(u1,norm(nv))), s0=0.24;
+      const c1=add(foot,mul(u1,s0)), c2=add(foot,mul(v1,s0)), c3=add(c1,mul(v1,s0));
+      line(c1,c3,'#e0654b',2.0,null,.95);
+      line(c2,c3,'#e0654b',2.0,null,.95);
+    }
+
+    ro.innerHTML=
+      '<div class="row"><span class="k">当前底</span><span class="v">'+names[baseSel]+'</span></div>'+
+      '<div class="row"><span class="k">底面积 |u×v|</span><span class="v">'+au.toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k">高（第三个向量的投影）</span><span class="v">'+hgt.toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k">面积 × 高 = 体积</span><span class="v">'+(au*hgt).toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k">(a×b)·c</span><span class="v">'+dot(NAB,c).toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k">(b×c)·a</span><span class="v">'+dot(cross(B,c),A).toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k">(c×a)·b</span><span class="v">'+dot(cross(c,A),B).toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k">反序 (b×a)·c</span><span class="v">'+dot(cross(B,A),c).toFixed(2)+'</span></div>';
+    vd.textContent='三种底的面积和高都不一样，乘出来是同一个数 —— 因为量的是同一个六面体。反序那一行只是变了个符号。';
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,HT);
+    if(mode===0) scene0();
+    else if(mode===1) scene1();
+    else scene2();
+    const po=proj([0,0,0]);
+    ctx.save();ctx.fillStyle='#e8dcc4';ctx.beginPath();ctx.arc(po.x,po.y,3,0,7);ctx.fill();ctx.restore();
   }
 
   let dragging=false,lx=0,ly=0;
@@ -340,11 +438,35 @@
     document.getElementById('va').textContent=(angC*180/Math.PI).toFixed(0)+'°';draw();});
   document.getElementById('sl').addEventListener('input',e=>{lift=+e.target.value;
     document.getElementById('vl').textContent=lift.toFixed(2);draw();});
+  document.getElementById('sh2').addEventListener('input',e=>{H2=+e.target.value;
+    document.getElementById('vh2').textContent=H2.toFixed(2);draw();});
+  document.getElementById('sm').addEventListener('input',e=>{M2=+e.target.value;
+    document.getElementById('vm').textContent=M2.toFixed(2);draw();});
+  document.getElementById('sh3').addEventListener('input',e=>{H3=+e.target.value;
+    document.getElementById('vh3').textContent=H3.toFixed(2);draw();});
+  document.getElementById('sa3').addEventListener('input',e=>{angC3=+e.target.value;
+    document.getElementById('va3').textContent=(angC3*180/Math.PI).toFixed(0)+'°';draw();});
 
-  document.querySelectorAll('.chip').forEach(el=>{
+  document.querySelectorAll('.chip[data-k]').forEach(el=>{
     el.addEventListener('click',()=>{
       el.classList.toggle('on');
       F[el.dataset.k]=el.classList.contains('on');
+      draw();
+    });
+  });
+  document.querySelectorAll('.chip[data-base]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      document.querySelectorAll('.chip[data-base]').forEach(x=>x.classList.remove('on'));
+      el.classList.add('on');baseSel=+el.dataset.base;draw();
+    });
+  });
+  document.querySelectorAll('.tab').forEach(el=>{
+    el.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+      el.classList.add('on');mode=+el.dataset.mode;
+      document.getElementById('p0').style.display=mode===0?'':'none';
+      document.getElementById('p1').style.display=mode===1?'':'none';
+      document.getElementById('p2').style.display=mode===2?'':'none';
       draw();
     });
   });
