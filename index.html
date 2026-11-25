@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>叉乘给面积，点乘才给体积</title>
+<style>
+  :root{
+    --ink:#e8dcc4; --dim:#9b8d75; --paper:#12100d; --paper2:#191510;
+    --a:#d9a441; --b:#7fa86b; --c:#6fa8d6; --n:#e0654b; --m:#c86bd8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 700px at 70% -10%, #241d14 0%, transparent 60%),
+      radial-gradient(900px 600px at 0% 110%, #1c1710 0%, transparent 55%),
+      var(--paper);
+    color:var(--ink);
+    font-family:"Songti SC","Noto Serif CJK SC","Source Han Serif SC",Georgia,"Microsoft YaHei",serif;
+    line-height:1.75;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
+  h1{font-size:26px;margin:6px 0 4px;letter-spacing:.5px;font-weight:600}
+  .lede{color:var(--dim);font-size:14.5px;margin:0 0 18px}
+  .grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:26px;align-items:start}
+  @media(max-width:880px){.grid{grid-template-columns:1fr;gap:18px}h1{font-size:21px}}
+
+  .stage{position:relative;background:
+      linear-gradient(#17130e,#100d09);
+    border:1px solid #2b241a;border-radius:10px;overflow:hidden;
+    box-shadow:inset 0 0 90px #000a, 0 14px 40px #0008}
+  canvas{display:block;width:100%;height:470px;touch-action:none;cursor:grab}
+  @media(max-width:880px){canvas{height:400px}}
+  canvas.drag{cursor:grabbing}
+  .hint{position:absolute;left:12px;bottom:10px;font-size:12px;color:#7d715c;font-family:ui-monospace,Consolas,monospace}
+
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 4px}
+  .chip{
+    font-family:ui-monospace,Consolas,monospace;font-size:13px;
+    background:#1a150f;border:1px solid #332a1e;color:var(--dim);
+    padding:7px 13px;border-radius:999px;cursor:pointer;transition:.18s;user-select:none}
+  .chip.on{color:#14110c;background:var(--a);border-color:var(--a)}
+  .chip.on.blue{background:var(--c);border-color:var(--c)}
+  .slider{display:flex;align-items:center;gap:10px;width:100%;margin-top:6px}
+  .slider label{font-size:13px;color:var(--dim);font-family:ui-monospace,Consolas,monospace;white-space:nowrap}
+  input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:3px;background:#3a3023;border-radius:3px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--c);border:2px solid #0d0b07;box-shadow:0 0 0 1px #4d8fc0}
+
+  .readout{margin-top:16px;font-family:ui-monospace,Consolas,monospace;font-size:14.5px;line-height:2.05}
+  .readout b{font-weight:600}
+  .row{display:flex;justify-content:space-between;gap:14px;border-bottom:1px dotted #2e2619;padding:5px 0}
+  .row:last-child{border-bottom:none}
+  .k{color:var(--dim)}
+  .v{color:var(--ink);text-align:right}
+  .dot{color:var(--a)} .crs{color:var(--m)}
+
+  .note{margin-top:22px;font-size:15px}
+  .note h2{font-size:16px;margin:22px 0 8px;color:var(--ink);font-weight:600;
+    padding-left:12px;border-left:3px solid #4a3c28}
+  .note p{margin:8px 0;color:#cfc3ab}
+  .note b{color:#f0e5cd}
+  .warn{background:#1d1510;border-left:3px solid var(--n);padding:12px 14px;margin:14px 0;
+    font-size:14.5px;border-radius:0 6px 6px 0;color:#e2d3b8}
+  .gl{color:var(--a)} .gl2{color:var(--c)} .gl3{color:var(--m)} .gl4{color:var(--n)}
+  footer{margin-top:34px;color:#6d6250;font-size:12.5px;text-align:center;font-family:ui-monospace,Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>叉乘给面积，点乘才给体积</h1>
+  <p class="lede">拖动画面旋转视角；拉滑块改 c 的高度——盯住红色箭头，它一动不动。</p>
+
+  <div class="grid">
+    <div>
+      <div class="stage">
+        <canvas id="cv"></canvas>
+        <div class="hint">拖动旋转 · 双指/滚轮可缩放</div>
+      </div>
+
+      <div class="controls">
+        <div class="chip on" id="tVol">显示六面体体积</div>
+        <div class="chip on blue" id="tCross">显示 (a×b)×c</div>
+      </div>
+      <div class="controls slider">
+        <label>c 的高度 h</label>
+        <input type="range" id="hs" min="0" max="2.6" step="0.05" value="2">
+        <label id="hv" style="color:var(--c)">2.00</label>
+      </div>
+
+      <div class="readout" id="ro"></div>
+    </div>
+
+    <div class="note">
+      <h2>一根钉子，两种用法</h2>
+      <p><b class="gl">a×b</b> 是<b>一根钉子</b>：长度等于 a、b 围出的面积，方向垂直于那个平面。它不表示体积，它是“面积 + 朝向”钉在一起。</p>
+      <p>这根钉子和 c 有两种配法，结果完全不同：</p>
+
+      <div class="warn">
+        <b class="crs">钉子 × c</b>（叉乘）<br>
+        结果必须垂直于钉子，所以只能<b>躺在地面上</b>。高度为 0，装不下体积。<br>
+        而且它只用到 c 在地面内的那部分——你把 c 抬高拉低，它<b>完全不变</b>。
+      </div>
+
+      <div class="warn" style="border-left-color:#c9a227">
+        <b class="dot">钉子 · c</b>（点乘）<br>
+        点乘专门取“投影”，也就是 <b>c 从地面升起来多高</b>。<br>
+        面积 × 高 = 体积。想要体积，只能走这条路。
+      </div>
+
+      <h2>为什么叉乘不可能给体积</h2>
+      <p><b>量纲。</b>a、b 是长度，|a×b| 是长度²（面积）。体积是长度³——必须再乘一个长度，少一次乘法就永远差一个量纲。</p>
+      <p><b>方向。</b>v×w 必定同时垂直于 v 和 w。钉子竖直，那 钉子×c 只能是水平的，它连“高”这一维都没有。</p>
+
+      <h2>三个式子，三种东西</h2>
+      <p><span class="gl">a×b</span> → 向量，面积（带朝向）<br>
+      <span class="gl3">(a×b)×c</span> → 向量，落回平面内的方向<br>
+      <span class="gl">(a×b)·c</span> → <b>数</b>，体积<br>
+      <span class="gl4">a×b×c</span> → 没定义，叉乘不满足结合律</p>
+
+      <h2>别被“高为 1”绕住</h2>
+      <p>说“|a×b| 等于高为 1 的体积”只是数值上对——差一个因子 1。就像边长 1 的正方形，面积 1、周长 4，数值都能算，但面积不是周长。</p>
+    </div>
+  </div>
+
+  <footer>拖动旋转 · 拉动滑块看体积怎么变、叉乘结果怎么不动<br><br><a href="perpendicular.html" style="color:#d9a441">→ 下一篇：垂直于一个方向，其实是一整张平面</a> · <a href="parallel.html" style="color:#d9a441">向量平行于平面 ≠ 在平面上</a></footer>
+</div>
+
+<script>
+(function(){
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+
+  // ---- 数学 ----
+  const A = [1,0,0];
+  const B = [0,1,0];
+  let H = 2.0;
+  const cross = (u,v)=>[u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]];
+  const dot = (u,v)=>u[0]*v[0]+u[1]*v[1]+u[2]*v[2];
+  const add = (u,v)=>[u[0]+v[0],u[1]+v[1],u[2]+v[2]];
+  const mul = (u,k)=>[u[0]*k,u[1]*k,u[2]*k];
+  const len = u=>Math.hypot(u[0],u[1],u[2]);
+
+  // ---- 相机（正交投影）----
+  let yaw = -0.62, pitch = 0.50, zoom = 1.0;
+  let W=0, Hh=0, S=1, CX=0, CY=0;
+
+  function resize(){
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    const r = cv.getBoundingClientRect();
+    W = r.width; Hh = r.height;
+    cv.width = W*dpr; cv.height = Hh*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    S = Math.min(W,Hh) * 0.30 * zoom;
+    CX = W*0.40; CY = Hh*0.60;
+  }
+
+  function proj(p){
+    const cy=Math.cos(yaw), sy=Math.sin(yaw), cp=Math.cos(pitch), sp=Math.sin(pitch);
+    const x = p[0]*cy - p[1]*sy;
+    const y = p[0]*sy + p[1]*cy;
+    const sx = x;
+    const sy2 = y*sp - p[2]*cp;
+    const depth = y*cp + p[2]*sp;
+    return { x: CX + sx*S, y: CY + sy2*S, d: depth };
+  }
+
+  function line(p,q,color,width,dash){
+    ctx.save();
+    ctx.strokeStyle=color; ctx.lineWidth=width||1.6; ctx.lineCap='round';
+    if(dash) ctx.setLineDash(dash);
+    const a=proj(p), b=proj(q);
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+    ctx.restore();
+  }
+
+  function arrow(p0,p1,color,width,label,labelOff){
+    const a=proj(p0), b=proj(p1);
+    const ang=Math.atan2(b.y-a.y, b.x-a.x);
+    ctx.save();
+    ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=width||2.6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x-(b.x-a.x)*0.0, b.y-(b.y-a.y)*0.0); ctx.stroke();
+    const hd = 13 + (width||2.6)*1.4, hw = 0.42;
+    ctx.beginPath();
+    ctx.moveTo(b.x,b.y);
+    ctx.lineTo(b.x-hd*Math.cos(ang-hw), b.y-hd*Math.sin(ang-hw));
+    ctx.lineTo(b.x-hd*Math.cos(ang+hw), b.y-hd*Math.sin(ang+hw));
+    ctx.closePath(); ctx.fill();
+    if(label){
+      ctx.font='600 15px ui-monospace,Consolas,monospace';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      const lx=b.x + (labelOff?labelOff[0]:0), ly=b.y + (labelOff?labelOff[1]:-16);
+      ctx.fillStyle='#0d0b07'; ctx.globalAlpha=.85;
+      const w=ctx.measureText(label).width;
+      ctx.fillRect(lx-w/2-6, ly-11, w+12, 22);
+      ctx.globalAlpha=1; ctx.fillStyle=color;
+      ctx.fillText(label, lx, ly);
+    }
+    ctx.restore();
+  }
+
+  function face(pts, fill, alpha, stroke){
+    const pr = pts.map(proj);
+    const d = pr.reduce((s,p)=>s+p.d,0)/pr.length;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.beginPath(); ctx.moveTo(pr[0].x,pr[0].y);
+    for(let i=1;i<pr.length;i++) ctx.lineTo(pr[i].x,pr[i].y);
+    ctx.closePath();
+    ctx.fillStyle=fill; ctx.fill();
+    if(stroke){ ctx.globalAlpha=1; ctx.strokeStyle=stroke; ctx.lineWidth=1.1; ctx.stroke(); }
+    ctx.restore();
+    return d;
+  }
+
+  // ---- 状态 ----
+  let showVol = true, showCross = true;
+
+  function draw(){
+    const C = [1,1,H];
+    const N = cross(A,B);              // (0,0,1) 长度 1 = 面积
+    const M = cross(N,C);              // (-1,1,0) 恒不变
+    const area = len(N);
+    const vol = Math.abs(dot(N,C));
+
+    ctx.clearRect(0,0,W,Hh);
+
+    // 地面网格（淡）
+    ctx.save();
+    ctx.globalAlpha=.16;
+    for(let i=-1;i<=3;i++){
+      line([i,-1,0],[i,3,0],'#4a3f2c',1);
+      line([-1,i,0],[3,i,0],'#4a3f2c',1);
+    }
+    ctx.restore();
+
+    // 底面（面积）
+    face([[0,0,0],A,add(A,B),B], '#c9a227', .16, '#8a6f2e');
+
+    // 底面斜线填充，强调"面积"
+    ctx.save();
+    ctx.beginPath();
+    const p0=proj([0,0,0]),p1=proj(A),p2=proj(add(A,B)),p3=proj(B);
+    ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.lineTo(p3.x,p3.y);
+    ctx.closePath(); ctx.clip();
+    ctx.strokeStyle='#c9a227'; ctx.globalAlpha=.20; ctx.lineWidth=1;
+    for(let k=-Hh;k<W+Hh;k+=11){
+      ctx.beginPath(); ctx.moveTo(k,0); ctx.lineTo(k+Hh,Hh); ctx.stroke();
+    }
+    ctx.restore();
+
+    // 六面体
+    const O=[0,0,0];
+    const v = {
+      o:O, a:A, b:B, c:C,
+      ab:add(A,B), ac:add(A,C), bc:add(B,C), abc:add(add(A,B),C)
+    };
+    if(showVol){
+      const faces = [
+        [[v.o,v.a,v.ab,v.b], .10],
+        [[v.c,v.ac,v.abc,v.bc], .16],
+        [[v.o,v.a,v.ac,v.c], .10],
+        [[v.b,v.ab,v.abc,v.bc], .10],
+        [[v.o,v.b,v.bc,v.c], .10],
+        [[v.a,v.ab,v.abc,v.ac], .10],
+      ].map(f=>({p:f[0], al:f[1], d: f[0].reduce((s,q)=>s+proj(q).d,0)/4}))
+       .sort((x,y)=>x.d-y.d);
+      faces.forEach(f=>face(f.p, '#d9a441', f.al, null));
+
+      // 楞（后侧虚线）
+      const edges = [
+        [v.o,v.a],[v.a,v.ab],[v.ab,v.b],[v.b,v.o],
+        [v.c,v.ac],[v.ac,v.abc],[v.abc,v.bc],[v.bc,v.c],
+        [v.o,v.c],[v.a,v.ac],[v.b,v.bc],[v.ab,v.abc]
+      ];
+      edges.forEach(e=>{
+        const mid=(proj(e[0]).d+proj(e[1]).d)/2;
+        if(mid < 0.2) line(e[0],e[1],'#6b5836',1.1,[4,5]);
+        else line(e[0],e[1],'#8a7346',1.2);
+      });
+    }
+
+    // 高度虚线：c 的垂足
+    const foot = mul(N, dot(C,N)/(len(N)*len(N)));
+    if(H>0.02){
+      line(foot, C, '#4f7fa5', 1.4, [5,5]);
+      const mid = mul(add(foot,C), .5);
+      const pm = proj(mid);
+      ctx.save();
+      ctx.font='600 13px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#8cc0e6'; ctx.textAlign='left'; ctx.textBaseline='middle';
+      ctx.fillText('高 h = '+H.toFixed(2), pm.x+8, pm.y);
+      ctx.restore();
+    }
+
+    // 向量
+    arrow(v.o, v.a, '#d9a441', 3.0, 'a', [-6, 16]);
+    arrow(v.o, v.b, '#7fa86b', 3.0, 'b', [16, 6]);
+    arrow(v.o, C,   '#6fa8d6', 3.0, 'c', [10, -18]);
+    arrow(v.o, N,   '#e0654b', 3.4, 'a×b（长度=面积）', [0, -20]);
+
+    if(showCross){
+      arrow(v.o, M, '#c86bd8', 3.2, '(a×b)×c', [0, 20]);
+      // 提示它在地面上
+      ctx.save();
+      ctx.font='600 12.5px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#c86bd8'; ctx.globalAlpha=.85;
+      const pm = proj(mul(M,.62));
+      ctx.fillText('贴在地面，高度=0', pm.x+10, pm.y+16);
+      ctx.restore();
+    }
+
+    // 原点
+    const po = proj(v.o);
+    ctx.save(); ctx.fillStyle='#e8dcc4';
+    ctx.beginPath(); ctx.arc(po.x,po.y,3.2,0,7); ctx.fill(); ctx.restore();
+
+    // 读数
+    const ro = document.getElementById('ro');
+    ro.innerHTML =
+      '<div class="row"><span class="k">底面积 |a×b|</span><span class="v">'+area.toFixed(2)+'　（固定）</span></div>'+
+      '<div class="row"><span class="k">c 的高度 h</span><span class="v">'+H.toFixed(2)+'</span></div>'+
+      '<div class="row"><span class="k"><span class="dot">(a×b)·c</span> = 体积</span><span class="v"><b class="dot">'+vol.toFixed(2)+'</b>　随 h 变</span></div>'+
+      '<div class="row"><span class="k"><span class="crs">(a×b)×c</span></span><span class="v"><b class="crs">('+M[0].toFixed(0)+', '+M[1].toFixed(0)+', '+M[2].toFixed(0)+')</b>　不动</span></div>'+
+      '<div class="row"><span class="k">叉乘结果的长度</span><span class="v">'+len(M).toFixed(3)+'　与 h 无关</span></div>';
+  }
+
+  // ---- 交互 ----
+  let dragging=false, lx=0, ly=0;
+  function down(e){ dragging=true; cv.classList.add('drag'); lx=(e.touches?e.touches[0]:e).clientX; ly=(e.touches?e.touches[0]:e).clientY; }
+  function move(e){
+    if(!dragging) return;
+    const t=e.touches?e.touches[0]:e;
+    yaw += (t.clientX-lx)*0.008;
+    pitch = Math.max(-0.15, Math.min(1.35, pitch + (t.clientY-ly)*0.006));
+    lx=t.clientX; ly=t.clientY;
+    draw();
+    if(e.cancelable) e.preventDefault();
+  }
+  function up(){ dragging=false; cv.classList.remove('drag'); }
+  cv.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:true}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up);
+  cv.addEventListener('wheel',e=>{ zoom=Math.max(.6,Math.min(2.2, zoom - e.deltaY*0.0012)); resize(); draw(); e.preventDefault(); },{passive:false});
+
+  const hs=document.getElementById('hs'), hv=document.getElementById('hv');
+  hs.addEventListener('input',()=>{ H=parseFloat(hs.value); hv.textContent=H.toFixed(2); draw(); });
+
+  const tv=document.getElementById('tVol'), tc=document.getElementById('tCross');
+  tv.addEventListener('click',()=>{ showVol=!showVol; tv.classList.toggle('on',showVol); draw(); });
+  tc.addEventListener('click',()=>{ showCross=!showCross; tc.classList.toggle('on',showCross); draw(); });
+
+  window.addEventListener('resize',()=>{resize();draw();});
+  resize(); draw();
+  // 轻微自动转一下，让人知道能拖
+  let intro=0;
+  const iv=setInterval(()=>{ intro++; yaw+=0.006; draw(); if(intro>40){clearInterval(iv);} },33);
+})();
+</script>
+</body>
+</html>

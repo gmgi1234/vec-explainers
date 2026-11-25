@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>向量没有位置：平行于平面 ≠ 在平面上</title>
+<style>
+  :root{--ink:#e8dcc4;--dim:#9b8d75;--paper:#12100d;
+    --a:#d9a441;--c:#6fa8d6;--n:#e0654b;--g:#7fa86b;--m:#c86bd8}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{background:
+      radial-gradient(1200px 700px at 75% -10%,#241d14 0%,transparent 60%),
+      radial-gradient(900px 600px at 0% 110%,#1a150f 0%,transparent 55%),var(--paper);
+    color:var(--ink);line-height:1.75;
+    font-family:"Songti SC","Noto Serif CJK SC","Source Han Serif SC",Georgia,"Microsoft YaHei",serif}
+  .wrap{max-width:1120px;margin:0 auto;padding:20px 16px 70px}
+  h1{font-size:23px;margin:4px 0 6px;font-weight:600}
+  .lede{color:var(--dim);font-size:14.5px;margin:0 0 14px}
+  .stage{position:relative;background:linear-gradient(#17130e,#100d09);
+    border:1px solid #2b241a;border-radius:10px;overflow:hidden;
+    box-shadow:inset 0 0 90px #000a,0 14px 40px #0008}
+  canvas{display:block;width:100%;height:460px;touch-action:none;cursor:grab}
+  @media(max-width:880px){canvas{height:400px}h1{font-size:19.5px}}
+  .hint{position:absolute;left:11px;bottom:9px;font-size:11.5px;color:#7d715c;
+    font-family:ui-monospace,Consolas,monospace}
+  .tabs{display:flex;gap:8px;margin:14px 0 10px;flex-wrap:wrap}
+  .tab{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;padding:8px 13px;
+    border-radius:999px;border:1px solid #332a1e;background:#1a150f;color:var(--dim);
+    cursor:pointer;user-select:none;transition:.16s}
+  .tab.on{background:var(--a);border-color:var(--a);color:#14110c}
+  .ctrl{display:flex;align-items:center;gap:10px;margin:9px 0}
+  .ctrl label{font-size:12.5px;color:var(--dim);font-family:ui-monospace,Consolas,monospace;
+    min-width:88px;white-space:nowrap}
+  .ctrl .val{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;min-width:54px;text-align:right}
+  input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:3px;background:#3a3023;
+    border-radius:3px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;
+    background:var(--c);border:2px solid #0d0b07;box-shadow:0 0 0 1px #4d8fc0}
+  .read{margin-top:12px;font-family:ui-monospace,Consolas,monospace;font-size:14px;line-height:2}
+  .row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dotted #2e2619;padding:5px 0}
+  .row:last-child{border-bottom:none}
+  .k{color:var(--dim)} .v{text-align:right}
+  .verdict{margin-top:10px;font-family:ui-monospace,Consolas,monospace;font-size:13.5px;
+    padding:10px 12px;border-radius:6px;background:#1b1610;border-left:3px solid var(--a)}
+  .note{margin-top:24px;font-size:15px;color:#cfc3ab}
+  .note h2{font-size:16.5px;color:var(--ink);margin:22px 0 8px;font-weight:600;
+    padding-left:11px;border-left:3px solid #4a3c28}
+  .note b{color:#f0e5cd}
+  .warn{background:#1d1510;border-left:3px solid var(--n);padding:12px 14px;margin:13px 0;
+    border-radius:0 6px 6px 0;font-size:14.5px}
+  .ok{background:#14180f;border-left:3px solid var(--g);padding:12px 14px;margin:13px 0;
+    border-radius:0 6px 6px 0;font-size:14.5px}
+  .gl{color:var(--a)} .gl2{color:var(--c)} .gl3{color:var(--n)} .gl4{color:var(--m)} .gl5{color:var(--g)}
+  footer{margin-top:32px;color:#6d6250;font-size:12.5px;text-align:center;
+    font-family:ui-monospace,Consolas,monospace;line-height:2.2}
+  footer a{color:#d9a441;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>向量没有位置：平行于平面 ≠ 在平面上</h1>
+  <p class="lede">把箭头挪到空中看看——它一点没变，只是起点换了地方。</p>
+
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="hint">拖动旋转</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-m="0">① 把同一个向量平移</div>
+    <div class="tab" data-m="1">② 直线 ∥ 平面 vs 直线在平面上</div>
+  </div>
+
+  <div id="panelA">
+    <div class="ctrl">
+      <label>起点离地高度</label>
+      <input type="range" id="sz" min="0" max="2" step="0.02" value="1.2">
+      <span class="val" id="vz" style="color:var(--c)">1.20</span>
+    </div>
+    <div class="ctrl">
+      <label>起点在地面内转</label>
+      <input type="range" id="sa" min="0" max="6.283" step="0.01" value="2.2">
+      <span class="val" id="va" style="color:var(--c)">126°</span>
+    </div>
+  </div>
+
+  <div id="panelB" style="display:none">
+    <div class="ctrl">
+      <label>直线过点的高度</label>
+      <input type="range" id="lh" min="0" max="2" step="0.02" value="0.9">
+      <span class="val" id="vl" style="color:var(--g)">0.90</span>
+    </div>
+    <div class="ctrl">
+      <label>直线方向</label>
+      <input type="range" id="la" min="0" max="6.283" step="0.01" value="0.9">
+      <span class="val" id="vla" style="color:var(--g)">52°</span>
+    </div>
+  </div>
+
+  <div class="read" id="ro"></div>
+  <div class="verdict" id="vd"></div>
+
+  <div class="note">
+    <h2>① 向量只有方向和长度</h2>
+    <p>把它画在原点、画在半空、画在地面另一头，<b>都是同一个向量</b>。唯一跟着变的是它的起点，而起点不属于向量本身。</p>
+    <p>所以严格的说法是：它的<b>方向平行于</b>地面。只有“把起点放在原点上画”这个习惯，才让箭头刚好铺满那张地面。</p>
+
+    <div class="ok">
+      <b class="gl5">你想要的那句话是对的</b><br>
+      只要方向平行就满足要求——不需要起点也落在面上。
+    </div>
+
+    <h2>② 点才需要“落在面上”</h2>
+    <p>点有位置，没有方向；向量有方向，没有位置。所以两者能提的要求不一样：</p>
+    <p><span class="gl2">方向条件</span>：s·n = 0（方向平行于平面）<br>
+    <span class="gl3">位置条件</span>：直线上那个点，落在平面上还是不在</p>
+
+    <div class="warn">
+      <b>直线 ∥ 平面</b>：s·n = 0，<b>且</b>点不在平面上<br>
+      <b>直线在平面上</b>：s·n = 0，<b>且</b>点在平面上
+    </div>
+    <p>前半句一模一样，差别全在“那个点落在哪儿”。切到标签②拉滑块，看直线什么时候抬起来。</p>
+
+    <h2>回到叉乘</h2>
+    <p>(a×b)×c 之所以“不带高度”，是因为它<b>沿 n 的分量恒为 0</b>——这是方向的事，跟它画在哪儿无关。就算你把它整体抬离地面，它依旧平行于地面，依旧贡献不了体积。</p>
+  </div>
+
+  <footer>
+    <a href="index.html">① 叉乘给面积，点乘才给体积</a> ·
+    <a href="perpendicular.html">② 垂直于一个方向是一整张平面</a> ·
+    <b>③ 你现在看的</b>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+  const cross=(u,v)=>[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+  const dot=(u,v)=>u[0]*v[0]+u[1]*v[1]+u[2]*v[2];
+  const add=(u,v)=>[u[0]+v[0],u[1]+v[1],u[2]+v[2]];
+  const mul=(u,k)=>[u[0]*k,u[1]*k,u[2]*k];
+  const len=u=>Math.hypot(u[0],u[1],u[2]);
+  const norm=u=>{const L=len(u)||1;return mul(u,1/L)};
+  const N=[0,0,1];
+
+  let yaw=-0.62,pitch=0.52,zoom=1,W=0,H=0,S=1,CX=0,CY=0,mode=0;
+  let pz=1.2,pang=2.2,lh=0.9,lang=0.9;
+
+  const W_VEC=[1.45,0.95,0];          // 固定的向量：z=0，方向平行地面
+
+  function resize(){
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    const r=cv.getBoundingClientRect();
+    W=r.width;H=r.height;cv.width=W*dpr;cv.height=H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    S=Math.min(W,H)*0.27*zoom;CX=W*0.46;CY=H*0.60;
+  }
+  function proj(p){
+    const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+    const x=p[0]*cy-p[1]*sy,y=p[0]*sy+p[1]*cy;
+    return {x:CX+x*S,y:CY+(y*sp-p[2]*cp)*S,d:y*cp+p[2]*sp};
+  }
+  function line(p,q,color,w,dash){
+    const a=proj(p),b=proj(q);
+    ctx.save();ctx.strokeStyle=color;ctx.lineWidth=w||1.5;ctx.lineCap='round';
+    if(dash)ctx.setLineDash(dash);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore();
+  }
+  function arrow(p0,p1,color,w,label,off,ghost){
+    const a=proj(p0),b=proj(p1);
+    const ang2=Math.atan2(b.y-a.y,b.x-a.x);
+    ctx.save();
+    ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=w||2.8;ctx.lineCap='round';
+    if(ghost)ctx.setLineDash([7,6]);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    ctx.setLineDash([]);
+    const hd=13+(w||2.8)*1.5,hw=0.42;
+    ctx.beginPath();ctx.moveTo(b.x,b.y);
+    ctx.lineTo(b.x-hd*Math.cos(ang2-hw),b.y-hd*Math.sin(ang2-hw));
+    ctx.lineTo(b.x-hd*Math.cos(ang2+hw),b.y-hd*Math.sin(ang2+hw));
+    ctx.closePath();ctx.fill();
+    if(label){
+      ctx.font='600 13px ui-monospace,Consolas,monospace';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      const w2=ctx.measureText(label).width;
+      let lx=b.x+(off?off[0]:0);
+      lx=Math.max(w2/2+10, Math.min(W-w2/2-10, lx));
+      const ly=b.y+(off?off[1]:-15);
+      ctx.globalAlpha=.88;ctx.fillStyle='#0d0b07';
+      ctx.fillRect(lx-w2/2-6,ly-11,w2+12,22);
+      ctx.globalAlpha=1;ctx.fillStyle=color;ctx.fillText(label,lx,ly);
+    }
+    ctx.restore();
+  }
+  function quad(pts,fill,alpha,stroke){
+    const pr=pts.map(proj);
+    ctx.save();ctx.globalAlpha=alpha;
+    ctx.beginPath();ctx.moveTo(pr[0].x,pr[0].y);
+    for(let i=1;i<pr.length;i++)ctx.lineTo(pr[i].x,pr[i].y);
+    ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+    if(stroke){ctx.globalAlpha=1;ctx.strokeStyle=stroke;ctx.lineWidth=1.1;ctx.stroke();}
+    ctx.restore();
+  }
+  function ground(){
+    ctx.save();ctx.globalAlpha=.20;
+    for(let i=-2;i<=2;i++){
+      line([i,-2,0],[i,2,0],'#4a3f2c',1);
+      line([-2,i,0],[2,i,0],'#4a3f2c',1);
+    }
+    ctx.restore();
+    quad([[-2,-2,0],[2,-2,0],[2,2,0],[-2,2,0]],'#c9a227',.09,'#8a6f2e');
+    const q=proj([-1.5,1.5,0]);
+    ctx.save();ctx.font='600 12px ui-monospace,Consolas,monospace';
+    ctx.fillStyle='#b39a5e';ctx.globalAlpha=.9;ctx.textAlign='center';
+    ctx.fillText('这张平面',q.x,q.y);ctx.restore();
+  }
+  function dot2(p,color,r){
+    const q=proj(p);ctx.save();ctx.fillStyle=color;
+    ctx.beginPath();ctx.arc(q.x,q.y,r||3.4,0,7);ctx.fill();ctx.restore();
+  }
+
+  function drawA(){
+    ground();
+    const P=[Math.cos(pang)*1.25,Math.sin(pang)*1.25,pz];
+    const P0=[P[0],P[1],0];
+    // 同一个向量画在原点（对照）
+    arrow([0,0,0],W_VEC,'#6d5f45',2.0,'同一个向量',[40,22],true);
+    // 起点垂线
+    if(pz>0.02){
+      line(P0,P,'#e0654b',1.6,[6,5]);
+      const m=proj(mul(add(P0,P),.5));
+      ctx.save();ctx.font='600 12.5px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#e0654b';ctx.textAlign='left';ctx.textBaseline='middle';
+      const t3='离地 '+pz.toFixed(2), w3=ctx.measureText(t3).width;
+      ctx.fillText(t3, Math.min(W-w3-12, m.x+8), m.y);ctx.restore();
+    }
+    dot2(P,'#6fa8d6',4);
+    arrow(P,add(P,W_VEC),'#6fa8d6',3.2,'w（它本身）',[0,-16]);
+    dot2(P0,'#d9a441',3);
+    return {wdotn:dot(W_VEC,N),h:pz};
+  }
+
+  function drawB(){
+    ground();
+    const d=[Math.cos(lang),Math.sin(lang),0];
+    const Q=[Math.cos(lang+1.2)*0.9,Math.sin(lang+1.2)*0.9,lh];
+    const inPlane = lh < 0.02;
+    const col = inPlane ? '#7fa86b' : '#d9a441';
+    // 地面上的"影子"直线
+    const Q0=[Q[0],Q[1],0];
+    line(add(Q0,mul(d,-2.2)),add(Q0,mul(d,2.2)),'#6d5f45',1.4,[6,5]);
+    // 直线本体
+    line(add(Q,mul(d,-2.2)),add(Q,mul(d,2.2)),col,3.4);
+    arrow(add(Q,mul(d,1.55)),add(Q,mul(d,2.2)),col,3.4,null);
+    // 点 Q 与垂线
+    dot2(Q,col,4.2);
+    if(!inPlane){
+      line(Q0,Q,'#e0654b',1.6,[6,5]);
+      const m=proj(mul(add(Q0,Q),.5));
+      ctx.save();ctx.font='600 12.5px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#e0654b';ctx.textAlign='left';ctx.textBaseline='middle';
+      const t4='点离面 '+lh.toFixed(2), w4=ctx.measureText(t4).width;
+      ctx.fillText(t4, Math.min(W-w4-12, m.x+8), m.y);ctx.restore();
+    }
+    const t=add(Q,mul(d,0.9));
+    const pt=proj(t);
+    ctx.save();ctx.font='600 13px ui-monospace,Consolas,monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    const lab=inPlane?'直线在平面上':'直线 ∥ 平面（不在平面上）';
+    const w2=ctx.measureText(lab).width;
+    ctx.globalAlpha=.9;ctx.fillStyle='#0d0b07';
+    ctx.fillRect(pt.x-w2/2-7,pt.y-12,w2+14,24);
+    ctx.globalAlpha=1;ctx.fillStyle=col;ctx.fillText(lab,pt.x,pt.y);
+    ctx.restore();
+    return {inPlane:inPlane,h:lh};
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const ro=document.getElementById('ro'),vd=document.getElementById('vd');
+    if(mode===0){
+      const r=drawA();
+      ro.innerHTML=
+        '<div class="row"><span class="k">w·n（沿法线的分量）</span><span class="v">'+r.wdotn.toFixed(2)+'　恒定</span></div>'+
+        '<div class="row"><span class="k">起点离地高度</span><span class="v">'+r.h.toFixed(2)+'</span></div>'+
+        '<div class="row"><span class="k">向量的方向变了吗</span><span class="v">没有</span></div>';
+      vd.textContent = r.h<0.02
+        ? '起点正好在地面上：箭头贴着平面。但这只是"画在原地"，不是"向量在平面上"。'
+        : '起点被抬到空中了：箭头悬空，可它仍然和原来那个向量一模一样——方向、长度都没变，所以它依旧平行于地面。';
+    }else{
+      const r=drawB();
+      ro.innerHTML=
+        '<div class="row"><span class="k">s·n（方向条件）</span><span class="v">0.00　恒定</span></div>'+
+        '<div class="row"><span class="k">直线过的点离面距离</span><span class="v">'+r.h.toFixed(2)+'</span></div>'+
+        '<div class="row"><span class="k">判定</span><span class="v">'+(r.inPlane?'在平面上':'平行但不在平面上')+'</span></div>';
+      vd.textContent = r.inPlane
+        ? '方向条件成立，点也落在面上 → 这条直线整条都在平面里。'
+        : '方向条件同样成立，但点离开了平面 → 直线与平面平行，始终隔着一个距离。';
+    }
+    const po=proj([0,0,0]);
+    ctx.save();ctx.fillStyle='#e8dcc4';ctx.beginPath();ctx.arc(po.x,po.y,3,0,7);ctx.fill();ctx.restore();
+  }
+
+  let dragging=false,lx=0,ly=0;
+  const down=e=>{dragging=true;lx=(e.touches?e.touches[0]:e).clientX;ly=(e.touches?e.touches[0]:e).clientY;};
+  const move=e=>{if(!dragging)return;const t=e.touches?e.touches[0]:e;
+    yaw+=(t.clientX-lx)*0.008;pitch=Math.max(-0.1,Math.min(1.35,pitch+(t.clientY-ly)*0.006));
+    lx=t.clientX;ly=t.clientY;draw();if(e.cancelable)e.preventDefault();};
+  const up=()=>{dragging=false;};
+  cv.addEventListener('mousedown',down);window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:true});cv.addEventListener('touchmove',move,{passive:false});cv.addEventListener('touchend',up);
+
+  document.getElementById('sz').addEventListener('input',e=>{pz=+e.target.value;
+    document.getElementById('vz').textContent=pz.toFixed(2);draw();});
+  document.getElementById('sa').addEventListener('input',e=>{pang=+e.target.value;
+    document.getElementById('va').textContent=(pang*180/Math.PI).toFixed(0)+'°';draw();});
+  document.getElementById('lh').addEventListener('input',e=>{lh=+e.target.value;
+    document.getElementById('vl').textContent=lh.toFixed(2);draw();});
+  document.getElementById('la').addEventListener('input',e=>{lang=+e.target.value;
+    document.getElementById('vla').textContent=(lang*180/Math.PI).toFixed(0)+'°';draw();});
+
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');mode=+t.dataset.m;
+    document.getElementById('panelA').style.display=mode===0?'':'none';
+    document.getElementById('panelB').style.display=mode===1?'':'none';
+    draw();
+  }));
+
+  window.addEventListener('resize',()=>{resize();draw();});
+  resize();draw();
+  let intro=0;const iv=setInterval(()=>{intro++;yaw+=0.005;draw();if(intro>34)clearInterval(iv);},33);
+})();
+</script>
+</body>
+</html>

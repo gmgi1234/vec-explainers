@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>垂直于一个方向，是一整张平面</title>
+<style>
+  :root{
+    --ink:#e8dcc4; --dim:#9b8d75; --paper:#12100d;
+    --a:#d9a441; --c:#6fa8d6; --n:#e0654b; --g:#7fa86b; --m:#c86bd8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{background:
+      radial-gradient(1200px 700px at 75% -10%, #241d14 0%, transparent 60%),
+      radial-gradient(900px 600px at 0% 110%, #1a150f 0%, transparent 55%),
+      var(--paper);
+    color:var(--ink);line-height:1.75;
+    font-family:"Songti SC","Noto Serif CJK SC","Source Han Serif SC",Georgia,"Microsoft YaHei",serif}
+  .wrap{max-width:1120px;margin:0 auto;padding:20px 16px 70px}
+  h1{font-size:24px;margin:4px 0 6px;font-weight:600}
+  .lede{color:var(--dim);font-size:14.5px;margin:0 0 16px}
+  .stage{position:relative;background:linear-gradient(#17130e,#100d09);
+    border:1px solid #2b241a;border-radius:10px;overflow:hidden;
+    box-shadow:inset 0 0 90px #000a,0 14px 40px #0008}
+  canvas{display:block;width:100%;height:470px;touch-action:none;cursor:grab}
+  @media(max-width:880px){canvas{height:410px}h1{font-size:20px}}
+  .hint{position:absolute;left:11px;bottom:9px;font-size:11.5px;color:#7d715c;
+    font-family:ui-monospace,Consolas,monospace}
+  .tabs{display:flex;gap:8px;margin:14px 0 10px;flex-wrap:wrap}
+  .tab{font-family:ui-monospace,Consolas,monospace;font-size:13px;padding:8px 14px;
+    border-radius:999px;border:1px solid #332a1e;background:#1a150f;color:var(--dim);
+    cursor:pointer;user-select:none;transition:.16s}
+  .tab.on{background:var(--a);border-color:var(--a);color:#14110c}
+  .ctrl{display:flex;align-items:center;gap:10px;margin:9px 0}
+  .ctrl label{font-size:13px;color:var(--dim);font-family:ui-monospace,Consolas,monospace;
+    min-width:82px;white-space:nowrap}
+  .ctrl .val{font-family:ui-monospace,Consolas,monospace;font-size:13px;min-width:52px;text-align:right}
+  input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:3px;background:#3a3023;
+    border-radius:3px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;
+    background:var(--c);border:2px solid #0d0b07;box-shadow:0 0 0 1px #4d8fc0}
+  .read{margin-top:12px;font-family:ui-monospace,Consolas,monospace;font-size:14.5px;line-height:2}
+  .row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dotted #2e2619;padding:5px 0}
+  .row:last-child{border-bottom:none}
+  .k{color:var(--dim)} .v{text-align:right}
+  .verdict{margin-top:10px;font-family:ui-monospace,Consolas,monospace;font-size:14px;
+    padding:9px 12px;border-radius:6px;background:#1b1610;border-left:3px solid var(--a)}
+  .note{margin-top:26px;font-size:15px;color:#cfc3ab}
+  .note h2{font-size:16.5px;color:var(--ink);margin:24px 0 8px;font-weight:600;
+    padding-left:11px;border-left:3px solid #4a3c28}
+  .note b{color:#f0e5cd}
+  .warn{background:#1d1510;border-left:3px solid var(--n);padding:12px 14px;margin:13px 0;
+    border-radius:0 6px 6px 0;font-size:14.5px}
+  .gl{color:var(--a)} .gl2{color:var(--c)} .gl3{color:var(--n)} .gl4{color:var(--m)}
+  footer{margin-top:34px;color:#6d6250;font-size:12.5px;text-align:center;
+    font-family:ui-monospace,Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>垂直于一个方向，是一整张平面</h1>
+  <p class="lede">三维里“垂直于 n”不是一条线，是一张平面。——把 v 抬高，看它怎么离开这张平面。</p>
+
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="hint">拖动旋转</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-m="0">① 垂直 = 一整张平面</div>
+    <div class="tab" data-m="1">② 两张平面交出一条线</div>
+  </div>
+
+  <div id="panelA">
+    <div class="ctrl">
+      <label>v 的高度 h</label>
+      <input type="range" id="sh" min="0" max="2" step="0.02" value="1.3">
+      <span class="val" id="vh" style="color:var(--c)">1.30</span>
+    </div>
+    <div class="ctrl">
+      <label>v 在地面内转向</label>
+      <input type="range" id="sa" min="0" max="6.283" step="0.01" value="0.7">
+      <span class="val" id="va" style="color:var(--c)">40°</span>
+    </div>
+  </div>
+
+  <div id="panelB" style="display:none">
+    <div class="ctrl">
+      <label>c 的高度</label>
+      <input type="range" id="sc" min="0.15" max="2" step="0.02" value="1.1">
+      <span class="val" id="vc" style="color:var(--m)">1.10</span>
+    </div>
+    <div class="ctrl">
+      <label>c 在地面内转向</label>
+      <input type="range" id="sca" min="0" max="6.283" step="0.01" value="0.4">
+      <span class="val" id="vca" style="color:var(--m)">23°</span>
+    </div>
+  </div>
+
+  <div class="read" id="ro"></div>
+  <div class="verdict" id="vd"></div>
+
+  <div class="note">
+    <h2>① 为什么“垂直”变成了一张平面</h2>
+    <p>二维里画一条垂线，就一条。三维里多了一个自由度：<b>绕着 n 转一圈，每个方向都和 n 垂直</b>。所以“垂直于 n”的所有向量拼起来，是一张完整的平面。</p>
+    <p>判据只有一个：<b>v·n = 0</b>。n 竖直时，v·n 恰好就是 v 的<b>高度</b>——高度为零 ⟺ 在地面上。</p>
+
+    <div class="warn">
+      <b class="gl3">(a×b)×c 为什么跑不出地面</b><br>
+      它垂直于 a×b，而“垂直于 a×b”<b>就是</b>“在 a、b 的平面里”。两条是同一件事，不是两个要求叠加。
+    </div>
+
+    <h2>② 两个约束各自交出一张平面，交线就是答案</h2>
+    <p>“垂直于 n”交出一张平面（地面）；“垂直于 c”交出另一张平面。两张平面过同一点，必然交成<b>一条线</b>——这条线就是 <span class="gl4">(a×b)×c</span> 的方向。</p>
+    <p>拉右边那个滑块给 c 加高度，你会看到：垂直于 c 的那张平面跟着转，交线也跟着转，<b>但它永远贴着地面</b>。</p>
+
+    <h2>记住这一句</h2>
+    <p><b>一个垂直条件在三维里只砍掉一个自由度</b>：空间 3 维 → 砍 1 → 剩 2 维（平面）；再来一个垂直条件 → 砍到 1 维（一条线）。所以“垂直”越多，剩的越少，永远不会反过来多出高度。</p>
+  </div>
+
+  <footer>拖动旋转 · 切上面的两个标签看两种情形<br><br><a href="index.html" style="color:#d9a441">← 上一篇：叉乘给面积，点乘才给体积</a> · <a href="parallel.html" style="color:#d9a441">下一篇：平行于平面 ≠ 在平面上</a></footer>
+</div>
+
+<script>
+(function(){
+  const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  const cross=(u,v)=>[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+  const dot=(u,v)=>u[0]*v[0]+u[1]*v[1]+u[2]*v[2];
+  const add=(u,v)=>[u[0]+v[0],u[1]+v[1],u[2]+v[2]];
+  const mul=(u,k)=>[u[0]*k,u[1]*k,u[2]*k];
+  const len=u=>Math.hypot(u[0],u[1],u[2]);
+  const norm=u=>{const L=len(u)||1;return mul(u,1/L)};
+  const N=[0,0,1];
+
+  let yaw=-0.62, pitch=0.52, zoom=1, W=0,H=0,S=1,CX=0,CY=0;
+  let mode=0;
+  let h=1.3, ang=0.7;
+  let ch=1.1, cang=0.4;
+
+  function resize(){
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    const r=cv.getBoundingClientRect();
+    W=r.width;H=r.height;
+    cv.width=W*dpr;cv.height=H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    S=Math.min(W,H)*0.28*zoom; CX=W*0.46; CY=H*0.60;
+  }
+  function proj(p){
+    const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+    const x=p[0]*cy-p[1]*sy, y=p[0]*sy+p[1]*cy;
+    return {x:CX+x*S, y:CY+(y*sp-p[2]*cp)*S, d:y*cp+p[2]*sp};
+  }
+  function line(p,q,color,w,dash){
+    const a=proj(p),b=proj(q);
+    ctx.save();ctx.strokeStyle=color;ctx.lineWidth=w||1.5;ctx.lineCap='round';
+    if(dash)ctx.setLineDash(dash);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore();
+  }
+  function arrow(p0,p1,color,w,label,off){
+    const a=proj(p0),b=proj(p1);
+    const ang2=Math.atan2(b.y-a.y,b.x-a.x);
+    ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=w||2.8;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    const hd=13+(w||2.8)*1.5,hw=0.42;
+    ctx.beginPath();ctx.moveTo(b.x,b.y);
+    ctx.lineTo(b.x-hd*Math.cos(ang2-hw),b.y-hd*Math.sin(ang2-hw));
+    ctx.lineTo(b.x-hd*Math.cos(ang2+hw),b.y-hd*Math.sin(ang2+hw));
+    ctx.closePath();ctx.fill();
+    if(label){
+      ctx.font='600 14px ui-monospace,Consolas,monospace';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      const lx=b.x+(off?off[0]:0), ly=b.y+(off?off[1]:-15);
+      const w2=ctx.measureText(label).width;
+      ctx.globalAlpha=.88;ctx.fillStyle='#0d0b07';
+      ctx.fillRect(lx-w2/2-6,ly-11,w2+12,22);
+      ctx.globalAlpha=1;ctx.fillStyle=color;ctx.fillText(label,lx,ly);
+    }
+    ctx.restore();
+  }
+  function quad(pts,fill,alpha,stroke){
+    const pr=pts.map(proj);
+    ctx.save();ctx.globalAlpha=alpha;
+    ctx.beginPath();ctx.moveTo(pr[0].x,pr[0].y);
+    for(let i=1;i<pr.length;i++)ctx.lineTo(pr[i].x,pr[i].y);
+    ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+    if(stroke){ctx.globalAlpha=1;ctx.strokeStyle=stroke;ctx.lineWidth=1.1;ctx.stroke();}
+    ctx.restore();
+  }
+  function ground(){
+    // 地面网格
+    ctx.save();ctx.globalAlpha=.22;
+    for(let i=-2;i<=2;i++){
+      line([i,-2,0],[i,2,0],'#4a3f2c',1);
+      line([-2,i,0],[2,i,0],'#4a3f2c',1);
+    }
+    ctx.restore();
+    quad([[-2,-2,0],[2,-2,0],[2,2,0],[-2,2,0]],'#c9a227',.10,'#8a6f2e');
+    (function(){const q=proj([1.72,1.72,0]);
+      ctx.save();ctx.font='600 12.5px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#b39a5e';ctx.globalAlpha=.9;ctx.textAlign='center';
+      ctx.fillText('地面 = 垂直于 n 的平面',q.x,q.y+4);ctx.restore();})();
+  }
+
+  function drawPlaneA(){
+    ground();
+    // v
+    const V=[Math.cos(ang),Math.sin(ang),h];
+    const Vp=[V[0],V[1],0];                     // 在地面内的分量
+    // 地面内的分量
+    arrow([0,0,0],Vp,'#d9a441',2.8,'v 在地上的部分',[0,18]);
+    // 竖直分量
+    line(Vp,V,'#e0654b',2.0,[7,6]);
+    (function(){const m=proj(mul(add(Vp,V),.5));
+      ctx.save();ctx.font='600 13.5px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#e0654b';ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText('高度 h = '+h.toFixed(2),m.x+9,m.y);ctx.restore();})();
+    // v 本体
+    arrow([0,0,0],V,'#6fa8d6',3.2,'v',[10,-18]);
+    // n
+    arrow([0,0,0],[0,0,1.55],'#e0654b',3.0,'n = a×b',[-4,-16]);
+    // 平面里放几根本身就垂直于 n 的向量
+    for(let k=0;k<7;k++){
+      const a=k*Math.PI*2/7+0.3;
+      line([0,0,0],[1.7*Math.cos(a),1.7*Math.sin(a),0],'#7fa86b',1.1);
+    }
+    const d=dot(V,N);
+    return {d:d, note:(Math.abs(d)<1e-9?'v 在地面里（v·n = 0）':'v 离开地面，竖直分量 = '+d.toFixed(2))};
+  }
+
+  function drawPlaneB(){
+    ground();
+    const C=[Math.cos(cang)*0.95,Math.sin(cang)*0.95,ch];
+    // 垂直于 c 的平面：取两个与 c 垂直的基
+    let u=norm(cross(C,[0,0,1]));
+    if(len(cross(C,[0,0,1]))<1e-6) u=[1,0,0];
+    let v=norm(cross(C,u));
+    const L=1.9;
+    const P=[add(add([0,0,0],mul(u,L)),mul(v,L)),
+             add(add([0,0,0],mul(u,-L)),mul(v,L)),
+             add(add([0,0,0],mul(u,-L)),mul(v,-L)),
+             add(add([0,0,0],mul(u,L)),mul(v,-L))];
+    quad(P,'#6fa8d6',.14,'#3f6c92');
+    // 交线 dir = n × c
+    let D=mul(cross(N,C),-1);
+    if(len(D)>1e-9){
+      D=norm(D);
+      line(mul(D,-1.9),mul(D,1.9),'#c86bd8',3.6);
+      const tip=mul(D,1.9), pp=proj(tip);
+      ctx.save();ctx.font='600 13.5px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#c86bd8';ctx.textAlign='center';ctx.textBaseline='middle';
+      const t2='(a×b)×c　交线';
+      const w2=ctx.measureText(t2).width;
+      ctx.globalAlpha=.9;ctx.fillStyle='#0d0b07';
+      ctx.fillRect(pp.x-w2/2-6,pp.y-12,w2+12,24);
+      ctx.globalAlpha=1;ctx.fillStyle='#c86bd8';ctx.fillText(t2,pp.x,pp.y);
+      ctx.restore();
+    }
+    arrow([0,0,0],C,'#6fa8d6',3.0,'c',[10,-16]);
+    arrow([0,0,0],[0,0,1.5],'#e0654b',2.8,'n = a×b',[-4,-16]);
+    return {d:0, note:'蓝色的平面垂直于 c；它和黄褐色的地面交出一条线（紫色）——这条线永远贴在地面上'};
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const r = mode===0 ? drawPlaneA() : drawPlaneB();
+    const po=proj([0,0,0]);
+    ctx.save();ctx.fillStyle='#e8dcc4';
+    ctx.beginPath();ctx.arc(po.x,po.y,3.2,0,7);ctx.fill();ctx.restore();
+    document.getElementById('vd').textContent=r.note;
+
+    const ro=document.getElementById('ro');
+    if(mode===0){
+      const V=[Math.cos(ang),Math.sin(ang),h];
+      ro.innerHTML=
+        '<div class="row"><span class="k">v·n（竖直分量）</span><span class="v">'+dot(V,N).toFixed(2)+'</span></div>'+
+        '<div class="row"><span class="k">v 在地面内的长度</span><span class="v">'+Math.hypot(V[0],V[1]).toFixed(2)+'</span></div>'+
+        '<div class="row"><span class="k">v 与地面的夹角</span><span class="v">'+(h>0.001?(Math.atan2(h,Math.hypot(V[0],V[1]))*180/Math.PI).toFixed(0)+'°':'0°（贴地）')+'</span></div>';
+    }else{
+      const C=[Math.cos(cang)*0.95,Math.sin(cang)*0.95,ch];
+      const D=norm(cross(N,C));
+      ro.innerHTML=
+        '<div class="row"><span class="k">c 的高度</span><span class="v">'+ch.toFixed(2)+'</span></div>'+
+        '<div class="row"><span class="k">交线方向 (a×b)×c</span><span class="v">('+D[0].toFixed(2)+', '+D[1].toFixed(2)+', '+D[2].toFixed(2)+')</span></div>'+
+        '<div class="row"><span class="k">交线的高度（一定是 0）</span><span class="v">'+Math.abs(D[2]).toFixed(2)+'</span></div>';
+    }
+  }
+
+  let dragging=false,lx=0,ly=0;
+  const down=e=>{dragging=true;lx=(e.touches?e.touches[0]:e).clientX;ly=(e.touches?e.touches[0]:e).clientY;};
+  const move=e=>{ if(!dragging)return; const t=e.touches?e.touches[0]:e;
+    yaw+=(t.clientX-lx)*0.008; pitch=Math.max(-0.1,Math.min(1.35,pitch+(t.clientY-ly)*0.006));
+    lx=t.clientX;ly=t.clientY;draw(); if(e.cancelable)e.preventDefault();};
+  const up=()=>{dragging=false;};
+  cv.addEventListener('mousedown',down);window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:true});cv.addEventListener('touchmove',move,{passive:false});cv.addEventListener('touchend',up);
+
+  document.getElementById('sh').addEventListener('input',e=>{h=+e.target.value;
+    document.getElementById('vh').textContent=h.toFixed(2);draw();});
+  document.getElementById('sa').addEventListener('input',e=>{ang=+e.target.value;
+    document.getElementById('va').textContent=(ang*180/Math.PI).toFixed(0)+'°';draw();});
+  document.getElementById('sc').addEventListener('input',e=>{ch=+e.target.value;
+    document.getElementById('vc').textContent=ch.toFixed(2);draw();});
+  document.getElementById('sca').addEventListener('input',e=>{cang=+e.target.value;
+    document.getElementById('vca').textContent=(cang*180/Math.PI).toFixed(0)+'°';draw();});
+
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on'); mode=+t.dataset.m;
+    document.getElementById('panelA').style.display=mode===0?'':'none';
+    document.getElementById('panelB').style.display=mode===1?'':'none';
+    draw();
+  }));
+
+  window.addEventListener('resize',()=>{resize();draw();});
+  resize();draw();
+  let intro=0; const iv=setInterval(()=>{intro++;yaw+=0.005;draw();if(intro>36)clearInterval(iv);},33);
+})();
+</script>
+</body>
+</html>
