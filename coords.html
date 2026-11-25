@@ -82,20 +82,20 @@
 
   <div id="p0">
     <div class="ctrl"><label>点 P 的坐标</label>
-      <input type="range" id="x1" min="-4" max="4" step="0.1" value="2.4">
-      <span class="val" id="vx1" style="color:var(--a)">2.4</span></div>
+      <input type="range" id="x1" min="-4" max="4" step="1" value="2">
+      <span class="val" id="vx1" style="color:var(--a)">2</span></div>
     <div class="ctrl"><label>点 Q 的坐标</label>
-      <input type="range" id="x2" min="-4" max="4" step="0.1" value="-1.2">
-      <span class="val" id="vx2" style="color:var(--g)">-1.2</span></div>
+      <input type="range" id="x2" min="-4" max="4" step="1" value="-1">
+      <span class="val" id="vx2" style="color:var(--g)">-1</span></div>
   </div>
 
   <div id="p1" style="display:none">
     <div class="ctrl"><label>P 的 x</label>
-      <input type="range" id="px" min="-3.6" max="3.6" step="0.1" value="2.2">
-      <span class="val" id="vpx" style="color:var(--a)">2.2</span></div>
+      <input type="range" id="px" min="-3" max="3" step="1" value="2">
+      <span class="val" id="vpx" style="color:var(--a)">2</span></div>
     <div class="ctrl"><label>P 的 y</label>
-      <input type="range" id="py" min="-3.6" max="3.6" step="0.1" value="1.6">
-      <span class="val" id="vpy" style="color:var(--a)">1.6</span></div>
+      <input type="range" id="py" min="-3" max="3" step="1" value="2">
+      <span class="val" id="vpy" style="color:var(--a)">2</span></div>
   </div>
 
   <div id="p2" style="display:none">
@@ -104,14 +104,14 @@
       <div class="chip on" data-k="BOX">显示投影框</div>
     </div>
     <div class="ctrl"><label>P 的 x</label>
-      <input type="range" id="sx" min="-2.6" max="2.6" step="0.1" value="1.6">
-      <span class="val" id="vsx" style="color:var(--a)">1.6</span></div>
+      <input type="range" id="sx" min="-2" max="2" step="1" value="2">
+      <span class="val" id="vsx" style="color:var(--a)">2</span></div>
     <div class="ctrl"><label>P 的 y</label>
-      <input type="range" id="sy" min="-2.6" max="2.6" step="0.1" value="1.4">
-      <span class="val" id="vsy" style="color:var(--a)">1.4</span></div>
+      <input type="range" id="sy" min="-2" max="2" step="1" value="2">
+      <span class="val" id="vsy" style="color:var(--a)">1</span></div>
     <div class="ctrl"><label>P 的 z</label>
-      <input type="range" id="sz3" min="-2.2" max="2.6" step="0.1" value="1.8">
-      <span class="val" id="vsz3" style="color:var(--a)">1.8</span></div>
+      <input type="range" id="sz3" min="-2" max="2" step="1" value="2">
+      <span class="val" id="vsz3" style="color:var(--a)">2</span></div>
   </div>
 
   <div id="p3" style="display:none">
@@ -122,20 +122,20 @@
       <div class="chip" data-op="dot">点积 u·v</div>
     </div>
     <div class="ctrl"><label>u 的 x</label>
-      <input type="range" id="ux" min="-3" max="3" step="0.1" value="2.2">
-      <span class="val" id="vux" style="color:var(--a)">2.2</span></div>
+      <input type="range" id="ux" min="-3" max="3" step="1" value="2">
+      <span class="val" id="vux" style="color:var(--a)">2</span></div>
     <div class="ctrl"><label>u 的 y</label>
-      <input type="range" id="uy" min="-3" max="3" step="0.1" value="0.9">
-      <span class="val" id="vuy" style="color:var(--a)">0.9</span></div>
+      <input type="range" id="uy" min="-3" max="3" step="1" value="1">
+      <span class="val" id="vuy" style="color:var(--a)">1</span></div>
     <div class="ctrl"><label>v 的 x</label>
-      <input type="range" id="vx" min="-3" max="3" step="0.1" value="0.6">
-      <span class="val" id="vvx" style="color:var(--c)">0.6</span></div>
+      <input type="range" id="vx" min="-3" max="3" step="1" value="1">
+      <span class="val" id="vvx" style="color:var(--c)">1</span></div>
     <div class="ctrl"><label>v 的 y</label>
-      <input type="range" id="vy" min="-3" max="3" step="0.1" value="2.0">
-      <span class="val" id="vvy" style="color:var(--c)">2.0</span></div>
+      <input type="range" id="vy" min="-3" max="3" step="1" value="2">
+      <span class="val" id="vvy" style="color:var(--c)">2</span></div>
     <div class="ctrl" id="krow" style="display:none"><label>倍数 k</label>
-      <input type="range" id="kk" min="-2" max="2" step="0.1" value="1.5">
-      <span class="val" id="vkk" style="color:var(--m)">1.5</span></div>
+      <input type="range" id="kk" min="-2" max="2" step="1" value="2">
+      <span class="val" id="vkk" style="color:var(--m)">2</span></div>
   </div>
 
   <div class="read" id="ro"></div>
@@ -184,13 +184,13 @@
   const mul=(u,k)=>[u[0]*k,u[1]*k,u[2]*k];
   const len=u=>Math.hypot.apply(null,u);   // 二维/三维通用
   const norm=u=>{const L=len(u)||1;return mul(u,1/L)};
-  const f2=v=>v.toFixed(2);
+  const f2=v=>String(Math.round(v*1000)/1000);   // 坐标只显示整数/短小数
 
   let mode=0;
-  let P1=2.4, Q1=-1.2;
-  let Px=2.2, Py=1.6;
-  let S3=[1.6,1.4,1.8];
-  let U=[2.2,0.9], V=[0.6,2.0], K=1.5, op='add';
+  let P1=2, Q1=-1;
+  let Px=2, Py=2;
+  let S3=[2,2,2];
+  let U=[2,1], V=[1,2], K=2, op='add';
   let showQ=true, showBox=true;
 
   let W=0,HT=0, S=1, CX=0, CY=0;
@@ -369,13 +369,13 @@
       '<div class="row"><span class="k">向量 OP 的坐标</span><span class="v">('+f2(P[0])+', '+f2(P[1])+', '+f2(P[2])+')</span></div>'+
       '<div class="row"><span class="k">模 |OP|</span><span class="v">'+len(P).toFixed(3)+'</span></div>';
     if(showQ){
-      const Q=[0.2,2.3,0.3];
+      const Q=[0,2,-1];
       seg(proj(P),proj(Q),'#c86bd8',2.6,[6,4],.95);
       dotat(proj(Q),'#c86bd8',6);
       tag(proj(Q).x,proj(Q).y-16,'Q','#c86bd8');
       const PQ=sub(Q,P);
       tag((proj(P).x+proj(Q).x)/2+30,(proj(P).y+proj(Q).y)/2+30,'PQ=('+f2(PQ[0])+','+f2(PQ[1])+','+f2(PQ[2])+')','#c86bd8');
-      html+='<div class="row"><span class="k">点 Q 的坐标</span><span class="v">(0.20, 2.30, 0.30)</span></div>'+
+      html+='<div class="row"><span class="k">点 Q 的坐标</span><span class="v">('+Q.join(', ')+')</span></div>'+
             '<div class="row"><span class="k">向量 PQ = Q − P</span><span class="v">('+f2(PQ[0])+', '+f2(PQ[1])+', '+f2(PQ[2])+')</span></div>';
     }
     ro.innerHTML=html;
@@ -424,7 +424,7 @@
       arrow2(o,wP,'#c86bd8',3.4,'k·u = ('+f2(w[0])+', '+f2(w[1])+')',[0,K<0?18:-20]);
       html='<div class="row"><span class="k">u</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
            '<div class="row"><span class="k">k</span><span class="v">'+f2(K)+'</span></div>'+
-           '<div class="row"><span class="k">|k| · |u|</span><span class="v">'+(Math.abs(K)*len(u)).toFixed(3)+'</span></div>'+
+           '<div class="row"><span class="k">|k| · |u|</span><span class="v">'+f2(Math.abs(K)*len(u))+'</span></div>'+
            '<div class="row"><span class="k">k·u（逐分量乘）</span><span class="v">('+f2(w[0])+', '+f2(w[1])+')</span></div>'+
            '<div class="row"><span class="k">方向</span><span class="v">'+(K>0?'与 u 同向':(K<0?'与 u 反向':'零向量（缩放为 0）'))+'</span></div>';
       vd.textContent='数乘：只改长度、不改方向；k 为负时整根箭头掉头。坐标上就是每个分量都乘 k。';
@@ -443,8 +443,8 @@
       seg(pv,vP,'#7fa86b',1.4,[4,4],.55);
       html='<div class="row"><span class="k">u = (x₁, y₁)</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
            '<div class="row"><span class="k">v = (x₂, y₂)</span><span class="v">('+f2(v[0])+', '+f2(v[1])+')</span></div>'+
-           '<div class="row"><span class="k">u·v = x₁x₂ + y₁y₂</span><span class="v">'+d.toFixed(3)+'</span></div>'+
-           '<div class="row"><span class="k">= |u||v|cosθ</span><span class="v">'+(lu*lv).toFixed(3)+' × '+cosA.toFixed(3)+'</span></div>'+
+           '<div class="row"><span class="k">u·v = x₁x₂ + y₁y₂</span><span class="v">'+f2(d)+'</span></div>'+
+           '<div class="row"><span class="k">= |u||v|cosθ</span><span class="v">'+f2(lu*lv)+' × '+cosA.toFixed(3)+'</span></div>'+
            '<div class="row"><span class="k">夹角 θ</span><span class="v">'+ang.toFixed(1)+'°</span></div>'+
            '<div class="row"><span class="k">结果是什么</span><span class="v">一个数，不是向量</span></div>';
       vd.textContent=Math.abs(d)<1e-9 ? 'u·v = 0，说明两个向量垂直——这是判垂直最快的办法。'
@@ -463,7 +463,7 @@
 
   function bindSlider(id,vid,setter){
     const el=document.getElementById(id), lab=document.getElementById(vid);
-    el.addEventListener('input',e=>{setter(+e.target.value); lab.textContent=(+e.target.value).toFixed(1); draw();});
+    el.addEventListener('input',e=>{setter(+e.target.value); lab.textContent=String(Math.round(+e.target.value)); draw();});
   }
   bindSlider('x1','vx1',v=>P1=v);
   bindSlider('x2','vx2',v=>Q1=v);
