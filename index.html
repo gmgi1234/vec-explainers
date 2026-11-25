@@ -60,9 +60,16 @@
   .gl{color:var(--a)} .gl2{color:var(--c)} .gl3{color:var(--n)} .gl4{color:var(--m)} .gl5{color:var(--g)}
   footer{margin-top:30px;color:#6d6250;font-size:12.5px;text-align:center;
     font-family:ui-monospace,Consolas,monospace}
+
+  /* —— 嵌入模式（?embed=1）：去掉页头与说明，只留画布+控件，供知识库内嵌 —— */
+  body.embed h1, body.embed .lede, body.embed .note, body.embed footer{display:none!important}
+  body.embed .wrap{padding:8px 10px 10px;max-width:none}
+  body.embed canvas{height:330px}
+  body.embed .stage{border-radius:12px}
 </style>
 </head>
 <body>
+<script>if(/[?&]embed=1/.test(location.search))document.body.classList.add("embed");</script>
 <div class="wrap">
   <h1>一根钉子：面积、体积、方向，一次看完</h1>
   <p class="lede">a、b 在地面上 → <b>a×b</b> 立起来（长度就是面积）；再配 c，叉乘得方向，点乘得体积。三个标签各讲一件事。</p>

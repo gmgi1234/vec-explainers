@@ -61,9 +61,16 @@
   footer{margin-top:28px;color:#6d6250;font-size:12.5px;text-align:center;
     font-family:ui-monospace,Consolas,monospace}
   footer a{color:#d9a441;text-decoration:none}
+
+  /* —— 嵌入模式（?embed=1）：去掉页头与说明，只留画布+控件，供知识库内嵌 —— */
+  body.embed h1, body.embed .lede, body.embed .note, body.embed footer{display:none!important}
+  body.embed .wrap{padding:8px 10px 10px;max-width:none}
+  body.embed canvas{height:330px}
+  body.embed .stage{border-radius:12px}
 </style>
 </head>
 <body>
+<script>if(/[?&]embed=1/.test(location.search))document.body.classList.add("embed");</script>
 <div class="wrap">
   <h1>从数轴到空间：点的坐标，向量的坐标</h1>
   <p class="lede">一维、二维、三维，同一件事只是多写几个数。后面接着讲加法、减法、数乘、点积。</p>
@@ -565,6 +572,10 @@
       document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
       el.classList.add('on'); mode=+el.dataset.mode;
       ['p0','p1','p2','p3'].forEach((p,i)=>document.getElementById(p).style.display = (i===mode?'':'none'));
+      if (document.body.classList.contains('embed')) {
+        cv.style.height = (mode===2||mode===3 ? 330 : 260) + 'px';
+        resize();
+      }
       draw();
     });
   });
@@ -588,6 +599,7 @@
   cv.addEventListener('touchend',()=>drag=false);
 
   window.addEventListener('resize',()=>{resize();draw();});
+  if (document.body.classList.contains('embed')) { cv.style.height = (mode===2||mode===3 ? 330 : 260) + 'px'; }
   resize();draw();
 })();
 </script>
