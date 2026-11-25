@@ -204,6 +204,32 @@
     const q=proj(p);ctx.save();ctx.fillStyle=color;
     ctx.beginPath();ctx.arc(q.x,q.y,r||3.4,0,7);ctx.fill();ctx.restore();
   }
+  // 地面上从 a 转到 b 的弧 + 箭头，示意右手定则
+  function rhArc(){
+    const r0=0.60, steps=26;
+    const a0=Math.atan2(A[1],A[0]), a1=Math.atan2(B[1],B[0]);
+    ctx.save();ctx.strokeStyle='#e0a24b';ctx.globalAlpha=.9;ctx.lineWidth=2.2;
+    ctx.beginPath();
+    for(let i=0;i<=steps;i++){
+      const t=a0+(a1-a0)*i/steps;
+      const p=proj([r0*Math.cos(t),r0*Math.sin(t),0]);
+      if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y);
+    }
+    ctx.stroke();ctx.restore();
+    const p0=proj([r0*Math.cos(a1-0.10),r0*Math.sin(a1-0.10),0]);
+    const p1=proj([r0*Math.cos(a1),r0*Math.sin(a1),0]);
+    const ang3=Math.atan2(p1.y-p0.y,p1.x-p0.x);
+    ctx.save();ctx.fillStyle='#e0a24b';ctx.globalAlpha=.95;
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);
+    ctx.lineTo(p1.x-12*Math.cos(ang3-0.42),p1.y-12*Math.sin(ang3-0.42));
+    ctx.lineTo(p1.x-12*Math.cos(ang3+0.42),p1.y-12*Math.sin(ang3+0.42));
+    ctx.closePath();ctx.fill();ctx.restore();
+    const pm=proj([r0*0.92*Math.cos((a0+a1)/2), r0*0.92*Math.sin((a0+a1)/2), 0]);
+    ctx.save();ctx.font='600 12px ui-monospace,Consolas,monospace';
+    ctx.fillStyle='#e0a24b';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('a → b', pm.x, pm.y+2);ctx.restore();
+  }
+
   function ground(){
     ctx.save();ctx.globalAlpha=.2;
     for(let i=-2;i<=3;i++){
@@ -247,7 +273,7 @@
     if(F.B) arrow([0,0,0],B,'#c9b46b',2.6,'b',[-16,8]);
 
     // n = a×b
-    if(F.N) arrow([0,0,0],mul(norm(NAB),1.5),'#e0654b',3.0,'n = a×b',[-6,-14]);
+    if(F.N){ rhArc(); arrow([0,0,0],mul(norm(NAB),1.5),'#e0654b',3.0,'n = a×b',[-6,-14]); }
 
     // c 的高度线（点乘取的就是这个投影）
     if(F.H && H>0.02){
