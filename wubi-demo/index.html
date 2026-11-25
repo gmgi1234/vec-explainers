@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一个模板 + 一份数据：五笔站点的另一种做法</title>
+<style>
+  :root{--ink:#2a2320;--muted:#8a7b6c;--line:#e6dcc9;--bg:#fbf7ef;--paper:#fffdf8;--accent:#a33c2f;--ok:#3f7a45}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:'KaiTi','楷体','STKaiti',"Songti SC",serif;line-height:1.75}
+  header{border-bottom:1px solid var(--line);padding:12px 20px;font-size:15px}
+  header a{color:var(--muted);text-decoration:none}
+  main{max-width:900px;margin:0 auto;padding:26px 22px 64px}
+  h1{font-size:30px;margin:6px 0 4px;letter-spacing:1px}
+  .sub{color:var(--muted);font-size:15.5px;margin-bottom:22px}
+  h2{font-size:21px;margin:34px 0 10px;padding-left:11px;border-left:4px solid var(--accent)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+  @media(max-width:640px){.two{grid-template-columns:1fr}h1{font-size:23px}}
+  .box{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--paper)}
+  .box h3{margin:0 0 8px;font-size:17px}
+  .box.bad h3{color:#a33c2f}
+  .box.good h3{color:var(--ok)}
+  .box ul{margin:6px 0 0;padding-left:20px}
+  .box li{margin:4px 0;font-size:15px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:15px;
+    font-family:"Segoe UI",Arial,"Microsoft YaHei",sans-serif}
+  th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left}
+  th{color:var(--muted);font-weight:500;font-size:13.5px}
+  td.num{font-family:ui-monospace,Consolas,monospace}
+  .big{font-size:20px;color:var(--accent);font-weight:700}
+  .demo{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+  .demo a{border:1px solid var(--line);border-radius:10px;padding:9px 18px;background:var(--paper);
+    color:var(--accent);text-decoration:none;font-size:19px}
+  code{background:#f1e9d8;padding:1px 6px;border-radius:5px;font-family:ui-monospace,Consolas,monospace;font-size:14px}
+  pre{background:#f6efe0;border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow:auto;
+    font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.6}
+  .warn{background:#fff6e6;border-left:4px solid #e2a03f;padding:12px 14px;margin:14px 0;
+    border-radius:0 8px 8px 0;font-size:15px}
+  footer{border-top:1px solid var(--line);padding:16px;text-align:center;color:var(--muted);font-size:13.5px}
+</style>
+</head><body>
+<header><a href="../">← 回到向量演示</a></header>
+<main>
+  <h1>把 12 万个页面，换成「一个模板 + 一份数据」</h1>
+  <div class="sub">不是换技术栈，只是不再给每个字预先生成一份一模一样的 HTML。</div>
+
+  <h2>现在是什么样</h2>
+  <div class="two">
+    <div class="box bad">
+      <h3>现在的做法</h3>
+      <ul>
+        <li><b>121,835</b> 个 HTML 文件</li>
+        <li>磁盘占用 <b>3,024 MB</b></li>
+        <li>一个「狗」字页 <b>66 KB</b></li>
+        <li>同一张字图在页里画了 <b>3 次</b>（86/98/新世纪各一份）</li>
+        <li>字根小图又重复十几遍</li>
+        <li>GitHub Pages 软上限 1 GB，超了 3 倍</li>
+      </ul>
+    </div>
+    <div class="box good">
+      <h3>改完是什么样</h3>
+      <ul>
+        <li><b>1</b> 个模板 + <b>1</b> 份数据</li>
+        <li>每个字只存 <b>一条记录</b>（约 5 KB）</li>
+        <li>字图只存 <b>一份</b>，三版渲染时复用</li>
+        <li>查什么字，就把参数放进地址栏</li>
+        <li>体积降到原来的 <b>1/10</b> 左右</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>它是怎么工作的</h2>
+  <pre>现在：/site/char/狗.html      ← 12 万个文件，每个自带全套 CSS + JS + 字图
+改后：/char.html?c=狗         ← 1 个文件，按参数查 data.js 里的记录
+
+浏览器打开 ?c=狗
+   → 读 data.js 里「狗」那一条
+   → 把编码、字根、字图填进模板
+   → 页面画出来</pre>
+
+  <h2>点一下试试（这就已经在跑了）</h2>
+  <p class="sub" style="margin:0 0 6px">同一份模板，地址栏换参数就是另一个字；页面标题也会跟着变。</p>
+  <div class="demo">
+    <a href="char.html?c=狗">狗</a>
+    <a href="char.html?c=国">国</a>
+    <a href="char.html?c=人">人</a>
+    <a href="char.html?c=大">大</a>
+  </div>
+
+  <h2>实测体积对比（同样这 4 个字）</h2>
+  <table>
+    <tr><th>项目</th><th>现在（每字一页）</th><th>改后（模板+数据）</th></tr>
+    <tr><td>文件数</td><td class="num">4 个 HTML</td><td class="num">0 个（只是数据里 4 条记录）</td></tr>
+    <tr><td>总字节</td><td class="num">202,759 B</td><td class="num">20,802 B</td></tr>
+    <tr><td>平均每字</td><td class="num">50.7 KB</td><td class="num">5.1 KB</td></tr>
+    <tr><td>字号图重复</td><td class="num">3 次／页</td><td class="num">1 次／字</td></tr>
+  </table>
+  <p><span class="big">≈ 10 倍</span>　同样内容，体积压到十分之一，文件数从 12 万降到个位数。</p>
+
+  <h2>全站推算是多少</h2>
+  <table>
+    <tr><th></th><th>现在</th><th>改后</th></tr>
+    <tr><td>文件数</td><td class="num">121,835</td><td class="num">几十个（按拼音分桶，比如 a 桶、b 桶…）</td></tr>
+    <tr><td>磁盘</td><td class="num">3,024 MB</td><td class="num">约 300–600 MB</td></tr>
+    <tr><td>能不能放 GitHub Pages</td><td class="num">超软上限 3 倍</td><td class="num">能，且还有余量</td></tr>
+    <tr><td>打开速度</td><td class="num">每次下载整套模板</td><td class="num">模板走缓存，只取一个桶的数据</td></tr>
+  </table>
+
+  <h2>有一个代价，得说清楚</h2>
+  <div class="warn">
+    <b>SEO。</b>现在每个字都有独立 URL、独立标题和描述，搜索引擎能一个一个收录——这是这套站最大的流量来源。改成动态页之后，搜索引擎只看到一个 <code>char.html</code>。
+    <br><br>
+    <b>折中方案（我推荐这个）：</b>热门字保留静态页（几百到几千个，撑起收录），冷门字走 <code>?c=</code> 动态渲染。既保住 SEO，又把 12 万文件降到几千。
+  </div>
+
+  <h2>跟现在这套代码的关系</h2>
+  <p>生成器里「算编码、拆字根、算颜色」的逻辑<b>一行都不用改</b>，只是最后一步从「写 12 万个 HTML」改成「往 data.js 里追加一条记录」。字根数据、配色、拆分规则全部沿用。</p>
+</main>
+<footer>演示数据：狗 / 国 / 人 / 大（取自现有站点，未改内容）</footer>
+</body></html>
