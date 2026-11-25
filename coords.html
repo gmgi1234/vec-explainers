@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>从数轴到空间：点的坐标与向量的坐标</title>
+<style>
+  :root{--ink:#e8dcc4;--dim:#9b8d75;--paper:#12100d;
+    --a:#d9a441;--c:#6fa8d6;--n:#e0654b;--g:#7fa86b;--m:#c86bd8}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{background:
+      radial-gradient(1200px 700px at 72% -10%,#241d14 0%,transparent 60%),
+      radial-gradient(900px 600px at 0% 110%,#1a150f 0%,transparent 55%),var(--paper);
+    color:var(--ink);line-height:1.78;
+    font-family:"Songti SC","Noto Serif CJK SC","Source Han Serif SC",Georgia,"Microsoft YaHei",serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:20px 16px 72px}
+  h1{font-size:22.5px;margin:4px 0 6px;font-weight:600}
+  .lede{color:var(--dim);font-size:14.5px;margin:0 0 14px}
+  .stage{position:relative;background:linear-gradient(#17130e,#100d09);
+    border:1px solid #2b241a;border-radius:10px;overflow:hidden;
+    box-shadow:inset 0 0 90px #000a,0 14px 40px #0008}
+  canvas{display:block;width:100%;height:440px;touch-action:none;cursor:grab}
+  @media(max-width:880px){canvas{height:390px}h1{font-size:19.5px}}
+  .hint{position:absolute;left:11px;bottom:9px;font-size:11.5px;color:#7d715c;
+    font-family:ui-monospace,Consolas,monospace}
+  .tabs{display:flex;gap:8px;margin:14px 0 6px;flex-wrap:wrap}
+  .tab{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;padding:8px 13px;
+    border-radius:999px;border:1px solid #332a1e;background:#1a150f;color:var(--dim);
+    cursor:pointer;user-select:none;transition:.16s}
+  .tab.on{background:var(--a);border-color:var(--a);color:#14110c}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px}
+  .chip{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;padding:7px 12px;
+    border-radius:999px;border:1px solid #332a1e;background:#1a150f;color:var(--dim);
+    cursor:pointer;user-select:none;transition:.16s}
+  .chip.on{background:var(--a);border-color:var(--a);color:#14110c}
+  .chip.on.p{background:var(--m);border-color:var(--m);color:#14110c}
+  .ctrl{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .ctrl label{font-size:12.5px;color:var(--dim);font-family:ui-monospace,Consolas,monospace;
+    min-width:74px;white-space:nowrap}
+  .ctrl .val{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;min-width:52px;text-align:right}
+  input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:3px;background:#3a3023;
+    border-radius:3px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;
+    background:var(--c);border:2px solid #0d0b07;box-shadow:0 0 0 1px #4d8fc0}
+  .read{margin-top:12px;font-family:ui-monospace,Consolas,monospace;font-size:13.8px;line-height:2}
+  .row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dotted #2e2619;padding:5px 0}
+  .row:last-child{border-bottom:none}
+  .k{color:var(--dim)} .v{text-align:right}
+  .verdict{margin-top:10px;font-family:ui-monospace,Consolas,monospace;font-size:13.5px;
+    padding:10px 12px;border-radius:6px;background:#1b1610;border-left:3px solid var(--a)}
+  .note{margin-top:30px;padding-top:8px;border-top:1px solid #2a2318;font-size:15px;color:#cfc3ab}
+  .note h2{font-size:16.5px;color:var(--ink);margin:24px 0 8px;font-weight:600;
+    padding-left:11px;border-left:3px solid #4a3c28}
+  .note b{color:#f0e5cd}
+  .warn{background:#1d1510;border-left:3px solid var(--n);padding:12px 14px;margin:13px 0;
+    border-radius:0 6px 6px 0;font-size:14.5px}
+  .ok{background:#14180f;border-left:3px solid var(--g);padding:12px 14px;margin:13px 0;
+    border-radius:0 6px 6px 0;font-size:14.5px}
+  .gl{color:var(--a)} .gl2{color:var(--c)} .gl3{color:var(--n)} .gl4{color:var(--m)} .gl5{color:var(--g)}
+  footer{margin-top:28px;color:#6d6250;font-size:12.5px;text-align:center;
+    font-family:ui-monospace,Consolas,monospace}
+  footer a{color:#d9a441;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>从数轴到空间：点的坐标，向量的坐标</h1>
+  <p class="lede">一维、二维、三维，同一件事只是多写几个数。后面接着讲加法、减法、数乘、点积。</p>
+
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="hint">三维页可拖动旋转</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-mode="0">① 数轴（一维）</div>
+    <div class="tab" data-mode="1">② 平面（二维）</div>
+    <div class="tab" data-mode="2">③ 空间（三维）</div>
+    <div class="tab" data-mode="3">④ 四种运算</div>
+  </div>
+
+  <div id="p0">
+    <div class="ctrl"><label>点 P 的坐标</label>
+      <input type="range" id="x1" min="-4" max="4" step="0.1" value="2.4">
+      <span class="val" id="vx1" style="color:var(--a)">2.4</span></div>
+    <div class="ctrl"><label>点 Q 的坐标</label>
+      <input type="range" id="x2" min="-4" max="4" step="0.1" value="-1.2">
+      <span class="val" id="vx2" style="color:var(--g)">-1.2</span></div>
+  </div>
+
+  <div id="p1" style="display:none">
+    <div class="ctrl"><label>P 的 x</label>
+      <input type="range" id="px" min="-3.6" max="3.6" step="0.1" value="2.2">
+      <span class="val" id="vpx" style="color:var(--a)">2.2</span></div>
+    <div class="ctrl"><label>P 的 y</label>
+      <input type="range" id="py" min="-3.6" max="3.6" step="0.1" value="1.6">
+      <span class="val" id="vpy" style="color:var(--a)">1.6</span></div>
+  </div>
+
+  <div id="p2" style="display:none">
+    <div class="chips">
+      <div class="chip on" data-k="Q">显示点 Q 与向量 PQ</div>
+      <div class="chip on" data-k="BOX">显示投影框</div>
+    </div>
+    <div class="ctrl"><label>P 的 x</label>
+      <input type="range" id="sx" min="-2.6" max="2.6" step="0.1" value="1.6">
+      <span class="val" id="vsx" style="color:var(--a)">1.6</span></div>
+    <div class="ctrl"><label>P 的 y</label>
+      <input type="range" id="sy" min="-2.6" max="2.6" step="0.1" value="1.4">
+      <span class="val" id="vsy" style="color:var(--a)">1.4</span></div>
+    <div class="ctrl"><label>P 的 z</label>
+      <input type="range" id="sz3" min="-2.2" max="2.6" step="0.1" value="1.8">
+      <span class="val" id="vsz3" style="color:var(--a)">1.8</span></div>
+  </div>
+
+  <div id="p3" style="display:none">
+    <div class="chips">
+      <div class="chip on" data-op="add">加法 u+v</div>
+      <div class="chip" data-op="sub">减法 u−v</div>
+      <div class="chip" data-op="mul">数乘 k·u</div>
+      <div class="chip" data-op="dot">点积 u·v</div>
+    </div>
+    <div class="ctrl"><label>u 的 x</label>
+      <input type="range" id="ux" min="-3" max="3" step="0.1" value="2.2">
+      <span class="val" id="vux" style="color:var(--a)">2.2</span></div>
+    <div class="ctrl"><label>u 的 y</label>
+      <input type="range" id="uy" min="-3" max="3" step="0.1" value="0.9">
+      <span class="val" id="vuy" style="color:var(--a)">0.9</span></div>
+    <div class="ctrl"><label>v 的 x</label>
+      <input type="range" id="vx" min="-3" max="3" step="0.1" value="0.6">
+      <span class="val" id="vvx" style="color:var(--c)">0.6</span></div>
+    <div class="ctrl"><label>v 的 y</label>
+      <input type="range" id="vy" min="-3" max="3" step="0.1" value="2.0">
+      <span class="val" id="vvy" style="color:var(--c)">2.0</span></div>
+    <div class="ctrl" id="krow" style="display:none"><label>倍数 k</label>
+      <input type="range" id="kk" min="-2" max="2" step="0.1" value="1.5">
+      <span class="val" id="vkk" style="color:var(--m)">1.5</span></div>
+  </div>
+
+  <div class="read" id="ro"></div>
+  <div class="verdict" id="vd"></div>
+
+  <div class="note">
+    <h2>① 点有坐标，向量只有“差”</h2>
+    <p>数轴上一个点 P，坐标是一个数（这里是 x = 2.4）。而向量 OP 也是 <b>(2.4)</b>——因为它从原点出发。</p>
+    <p>换个说法：<b>点的坐标是“从原点走到它”的那段位移</b>。所以点在原点右边，向量就指着右边。</p>
+    <div class="ok">
+      向量 PQ = Q − P。数轴上就是 <b>x<sub>Q</sub> − x<sub>P</sub></b>——终点减起点，不是加、不是取平均。
+    </div>
+
+    <h2>② 二维：坐标就是“沿两个方向各走多少”</h2>
+    <p>平面上一个点要两个数才说得清位置。<b>向量坐标</b>和它一模一样：(a, b)。差别只在解释——点说的是“落在哪儿”，向量说的是“走多远、朝哪走”。</p>
+    <p>从原点指向 P 的箭头，横着走 a、竖着走 b。那两条虚线就是它的两个分量。</p>
+
+    <h2>③ 三维：道理不变，只是多一个数</h2>
+    <p>空间里点写成 (x, y, z)，向量也是 (x, y, z)。<b>没有新规则，只是坐标多了一位。</b></p>
+    <p>两点之差：PQ = (x₂−x₁, y₂−y₁, z₂−z₁)。三个分量各自相减，各管各的。</p>
+
+    <h2>④ 四种运算，几何上在干什么</h2>
+    <p><b class="gl">加法 u+v</b>：平行四边形法则——把 v 平移到 u 的末端，从原点连到那一点。<br>
+    <b class="gl2">减法 u−v</b>：u 加上 −v（−v 就是 v 掉头）。<br>
+    <b class="gl4">数乘 k·u</b>：方向不变（k&lt;0 时掉头），长度乘 |k|。<br>
+    <b class="gl5">点积 u·v</b>：<b>是个数</b>，= |u||v|cosθ = x₁x₂ + y₁y₂。它量的是“两个向量有多顺着对方”。</p>
+
+    <div class="warn">
+      <b>最容易混的一条：</b>点积得到的是<b>数</b>，不是向量；加减和数乘得到的还是<b>向量</b>。看到题目问“求 u·v”，答案不该带箭头。
+    </div>
+
+    <h2>一句话</h2>
+    <p>维度只是坐标的个数；<b>点的坐标</b>定位置，<b>向量的坐标</b>定位移，两者写法相同、含义不同。运算全在坐标上逐分量做，几何意义再回头看箭头怎么摆。</p>
+  </div>
+
+  <footer><a href="./">← 回到「一根钉子」</a></footer>
+</div>
+
+<script>
+(function(){
+  const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+  const cross=(u,v)=>[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+  const dot=(u,v)=>u[0]*v[0]+u[1]*v[1]+u[2]*v[2];
+  const add=(u,v)=>[u[0]+v[0],u[1]+v[1],u[2]+v[2]];
+  const sub=(u,v)=>[u[0]-v[0],u[1]-v[1],u[2]-v[2]];
+  const mul=(u,k)=>[u[0]*k,u[1]*k,u[2]*k];
+  const len=u=>Math.hypot.apply(null,u);   // 二维/三维通用
+  const norm=u=>{const L=len(u)||1;return mul(u,1/L)};
+  const f2=v=>v.toFixed(2);
+
+  let mode=0;
+  let P1=2.4, Q1=-1.2;
+  let Px=2.2, Py=1.6;
+  let S3=[1.6,1.4,1.8];
+  let U=[2.2,0.9], V=[0.6,2.0], K=1.5, op='add';
+  let showQ=true, showBox=true;
+
+  let W=0,HT=0, S=1, CX=0, CY=0;
+  let yaw=0.55, pitch=0.5;
+  const ro=document.getElementById('ro'), vd=document.getElementById('vd');
+
+  function resize(){
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    const r=cv.getBoundingClientRect();
+    W=r.width;HT=r.height;cv.width=W*dpr;cv.height=HT*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    S=Math.min(W,HT)*0.105; CX=W/2; CY=HT/2;
+    S3S=Math.min(W,HT)*0.135;
+    S2=Math.min(W,HT)*0.085;
+  }
+  let S3S=40, S2=32;
+
+  // —— 屏幕坐标（二维/一维）：右 x，上 y
+  function p2(x,y){ return {x:CX+x*S2, y:CY-y*S2}; }
+
+  // —— 三维投影（右手系）
+  function proj(p){
+    const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+    const x=p[0]*cy-p[1]*sy, y=p[0]*sy+p[1]*cy;
+    return {x:CX+x*S3S, y:CY+(-y*sp-p[2]*cp)*S3S};
+  }
+
+  function seg(a,b,color,w,dash,alpha){
+    ctx.save();ctx.globalAlpha=alpha==null?1:alpha;
+    ctx.strokeStyle=color;ctx.lineWidth=w||1.4;ctx.lineCap='round';
+    if(dash)ctx.setLineDash(dash);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore();
+  }
+  function arrow2(a,b,color,w,label,off){
+    const ang=Math.atan2(b.y-a.y,b.x-a.x);
+    ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=w||2.8;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    const hd=12+(w||2.8)*1.3,hw=0.42;
+    ctx.beginPath();ctx.moveTo(b.x,b.y);
+    ctx.lineTo(b.x-hd*Math.cos(ang-hw),b.y-hd*Math.sin(ang-hw));
+    ctx.lineTo(b.x-hd*Math.cos(ang+hw),b.y-hd*Math.sin(ang+hw));
+    ctx.closePath();ctx.fill();
+    if(label) tag(b.x+(off?off[0]:0), b.y+(off?off[1]:-16), label, color);
+    ctx.restore();
+  }
+  function tag(x,y,text,color){
+    ctx.save();ctx.font='600 13px ui-monospace,Consolas,monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    const tw=ctx.measureText(text).width;
+    let lx=Math.max(tw/2+8,Math.min(W-tw/2-8,x));
+    ctx.globalAlpha=.9;ctx.fillStyle='#0d0b07';
+    ctx.fillRect(lx-tw/2-6,y-11,tw+12,22);
+    ctx.globalAlpha=1;ctx.fillStyle=color;ctx.fillText(text,lx,y);ctx.restore();
+  }
+  function dotat(p,color,r){
+    ctx.save();ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,r||3.6,0,7);ctx.fill();ctx.restore();
+  }
+
+  // ---------------- ① 数轴 ----------------
+  function scene1(){
+    const y=CY+40, x0=p2(-4.6,0).x, x1=p2(4.6,0).x;
+    seg({x:x0,y:y},{x:x1,y:y},'#6d6250',1.6);
+    // 箭头
+    arrow2({x:x1-14,y:y},{x:x1,y:y},'#6d6250',1.6,null,null);
+    for(let i=-4;i<=4;i++){
+      const px=p2(i,0).x;
+      seg({x:px,y:y-6},{x:px,y:y+6},'#6d6250',1.2);
+      ctx.save();ctx.font='11.5px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#8a7b6c';ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillText(String(i),px,y+9);ctx.restore();
+    }
+    ctx.save();ctx.font='600 12px ui-monospace,Consolas,monospace';
+    ctx.fillStyle='#9b8d75';ctx.textAlign='left';ctx.textBaseline='bottom';
+    ctx.fillText('O',x0-4,y-8);ctx.restore();
+
+    const pP=p2(P1,0), pQ=p2(Q1,0);
+    // 向量 OP
+    arrow2({x:p2(0,0).x,y:y},pP,'#d9a441',3.2,'OP = ('+f2(P1)+')',[0,-22]);
+    // 点
+    dotat(pP,'#d9a441',5); tag(pP.x,pP.y+22,'P',( '#d9a441'));
+    dotat(pQ,'#7fa86b',5); tag(pQ.x,pQ.y+22,'Q','#7fa86b');
+    // 向量 PQ
+    seg(pP,pQ,'#7fa86b',2.2,[6,4],.95);
+    arrow2({x:pQ.x+(pP.x-pQ.x)*0.06,y:pQ.y},{x:pQ.x,y:pQ.y},'#7fa86b',2.2,null,null);
+    tag((pP.x+pQ.x)/2,(pP.y+pQ.y)/2-14,'PQ = ('+f2(Q1-P1)+')','#7fa86b');
+
+    ro.innerHTML=
+      '<div class="row"><span class="k">点 P 的坐标</span><span class="v">x = '+f2(P1)+'</span></div>'+
+      '<div class="row"><span class="k">向量 OP 的坐标</span><span class="v">('+f2(P1)+')　—— 只有一个数</span></div>'+
+      '<div class="row"><span class="k">点 Q 的坐标</span><span class="v">x = '+f2(Q1)+'</span></div>'+
+      '<div class="row"><span class="k">向量 PQ = Q − P</span><span class="v">('+f2(Q1-P1)+')</span></div>';
+    vd.textContent='一维：一个数就够。点和向量的写法一样，区别是点说"落在哪儿"，向量说"走了多远、朝哪边"。';
+  }
+
+  // ---------------- ② 平面 ----------------
+  function grid2(){
+    for(let i=-4;i<=4;i++){
+      seg(p2(i,-4),p2(i,4),'#2f2a20',1);
+      seg(p2(-4,i),p2(4,i),'#2f2a20',1);
+    }
+    seg(p2(-4.4,0),p2(4.4,0),'#6d6250',1.6);
+    seg(p2(0,-3.8),p2(0,4.2),'#6d6250',1.6);
+    arrow2(p2(4.1,0),p2(4.4,0),'#6d6250',1.6,null,null);
+    arrow2(p2(0,3.9),p2(0,4.2),'#6d6250',1.6,null,null);
+    tag(p2(4.4,0).x-10,p2(4.4,0).y+16,'x','#8a7b6c');
+    tag(p2(0,4.2).x+16,p2(0,4.2).y+8,'y','#8a7b6c');
+    for(let i=-3;i<=3;i++){
+      if(i===0) continue;
+      ctx.save();ctx.font='10.5px ui-monospace,Consolas,monospace';
+      ctx.fillStyle='#7a6f5d';ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillText(String(i),p2(i,0).x,p2(0,0).y+5);ctx.restore();
+    }
+  }
+  function scene2(){
+    grid2();
+    const Pp=p2(Px,Py);
+    // 分量虚线
+    seg(p2(0,0),p2(Px,0),'#8a6f2e',1.4,[5,4],.9);
+    seg(p2(Px,0),Pp,'#8a6f2e',1.4,[5,4],.9);
+    seg(p2(0,0),p2(0,Py),'#8a6f2e',1.4,[5,4],.9);
+    seg(p2(0,Py),Pp,'#8a6f2e',1.4,[5,4],.9);
+    tag(p2(Px/2,0).x,p2(Px/2,0).y+16,'x = '+f2(Px),'#8a6f2e');
+    tag(p2(0,Py/2).x+34,p2(0,Py/2).y,'y = '+f2(Py),'#8a6f2e');
+    arrow2(p2(0,0),Pp,'#d9a441',3.2,'OP = ('+f2(Px)+', '+f2(Py)+')',[0,-24]);
+    dotat(Pp,'#d9a441',5);
+    tag(Pp.x+16,Pp.y-10,'P','#d9a441');
+
+    ro.innerHTML=
+      '<div class="row"><span class="k">点 P 的坐标</span><span class="v">('+f2(Px)+', '+f2(Py)+')</span></div>'+
+      '<div class="row"><span class="k">向量 OP 的坐标</span><span class="v">('+f2(Px)+', '+f2(Py)+')　—— 一模一样</span></div>'+
+      '<div class="row"><span class="k">模 |OP| = √(x²+y²)</span><span class="v">'+Math.hypot(Px,Py).toFixed(3)+'</span></div>'+
+      '<div class="row"><span class="k">沿 x 走 / 沿 y 走</span><span class="v">'+f2(Px)+' / '+f2(Py)+'</span></div>';
+    vd.textContent='二维：两个数。点说的是位置，向量说的是"横着走多少、竖着走多少"——写法相同，解释不同。';
+  }
+
+  // ---------------- ③ 空间 ----------------
+  function gridFloor(){
+    ctx.save();ctx.globalAlpha=.22;
+    for(let i=-2;i<=2;i++){
+      seg(proj([i,-2,0]),proj([i,2,0]),'#4a3f2c',1);
+      seg(proj([-2,i,0]),proj([2,i,0]),'#4a3f2c',1);
+    }
+    ctx.restore();
+  }
+  // 坐标轴画在最后，压在最上层，避免被箭头盖住
+  function axes3(){
+    arrow2(proj([0,0,0]),proj([2.9,0,0]),'#e0b055',2.4,'x',[0,20]);
+    arrow2(proj([0,0,0]),proj([0,2.9,0]),'#8fd08f',2.4,'y',[-22,8]);
+    arrow2(proj([0,0,0]),proj([0,0,2.9]),'#7fb8e0',2.4,'z',[-20,-10]);
+  }
+  function scene3(){
+    const P=S3.slice();
+    gridFloor();
+    if(showBox){
+      const O=[0,0,0];
+      seg(proj(O),proj([P[0],0,0]),'#8a6f2e',1.3,[5,4],.85);
+      seg(proj(O),proj([0,P[1],0]),'#8a6f2e',1.3,[5,4],.85);
+      seg(proj(O),proj([0,0,P[2]]),'#8a6f2e',1.3,[5,4],.85);
+      seg(proj([P[0],0,0]),proj([P[0],P[1],0]),'#8a6f2e',1.1,[4,4],.55);
+      seg(proj([0,P[1],0]),proj([P[0],P[1],0]),'#8a6f2e',1.1,[4,4],.55);
+      seg(proj([P[0],P[1],0]),proj(P),'#8a6f2e',1.2,[5,4],.8);
+      seg(proj([P[0],0,P[2]]),proj(P),'#8a6f2e',1.0,[4,4],.45);
+      seg(proj([0,P[1],P[2]]),proj(P),'#8a6f2e',1.0,[4,4],.45);
+      seg(proj([P[0],0,0]),proj([P[0],0,P[2]]),'#8a6f2e',1.0,[4,4],.45);
+      seg(proj([0,P[1],0]),proj([0,P[1],P[2]]),'#8a6f2e',1.0,[4,4],.45);
+      seg(proj([P[0],P[1],0]),proj([0,P[1],0]),'#8a6f2e',1.0,[4,4],.45);
+      seg(proj([P[0],P[1],0]),proj([P[0],0,0]),'#8a6f2e',1.0,[4,4],.45);
+    }
+    axes3();
+    arrow2(proj([0,0,0]),proj(P),'#d9a441',3.2,null);
+    tag(proj(P).x,proj(P).y-18,'OP = ('+f2(P[0])+', '+f2(P[1])+', '+f2(P[2])+')','#d9a441');
+    dotat(proj(P),'#d9a441',5);
+
+    let html=
+      '<div class="row"><span class="k">点 P 的坐标</span><span class="v">('+f2(P[0])+', '+f2(P[1])+', '+f2(P[2])+')</span></div>'+
+      '<div class="row"><span class="k">向量 OP 的坐标</span><span class="v">('+f2(P[0])+', '+f2(P[1])+', '+f2(P[2])+')</span></div>'+
+      '<div class="row"><span class="k">模 |OP|</span><span class="v">'+len(P).toFixed(3)+'</span></div>';
+    if(showQ){
+      const Q=[0.2,2.3,0.3];
+      seg(proj(P),proj(Q),'#c86bd8',2.6,[6,4],.95);
+      dotat(proj(Q),'#c86bd8',6);
+      tag(proj(Q).x,proj(Q).y-16,'Q','#c86bd8');
+      const PQ=sub(Q,P);
+      tag((proj(P).x+proj(Q).x)/2+30,(proj(P).y+proj(Q).y)/2+30,'PQ=('+f2(PQ[0])+','+f2(PQ[1])+','+f2(PQ[2])+')','#c86bd8');
+      html+='<div class="row"><span class="k">点 Q 的坐标</span><span class="v">(0.20, 2.30, 0.30)</span></div>'+
+            '<div class="row"><span class="k">向量 PQ = Q − P</span><span class="v">('+f2(PQ[0])+', '+f2(PQ[1])+', '+f2(PQ[2])+')</span></div>';
+    }
+    ro.innerHTML=html;
+    vd.textContent='三维：三个数，规则一条没变。PQ 就是三个分量各自相减——终点减起点。';
+  }
+
+  // ---------------- ④ 运算 ----------------
+  function scene4(){
+    grid2();
+    const u=U.slice(), v=V.slice();
+    const uP=p2(u[0],u[1]), vP=p2(v[0],v[1]), o=p2(0,0);
+    arrow2(o,uP,'#d9a441',3.0,'u',[0,-18]);
+    arrow2(o,vP,'#6fa8d6',3.0,'v',[0,-18]);
+    let html='';
+
+    if(op==='add'){
+      const w=[u[0]+v[0], u[1]+v[1]];
+      const wP=p2(w[0],w[1]);
+      seg(uP,wP,'#6fa8d6',1.8,[6,4],.85);
+      seg(vP,wP,'#d9a441',1.8,[6,4],.85);
+      arrow2(o,wP,'#c86bd8',3.4,'u+v = ('+f2(w[0])+', '+f2(w[1])+')',[0,-20]);
+      dotat(wP,'#c86bd8',4.5);
+      html='<div class="row"><span class="k">u</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
+           '<div class="row"><span class="k">v</span><span class="v">('+f2(v[0])+', '+f2(v[1])+')</span></div>'+
+           '<div class="row"><span class="k">u+v（逐分量相加）</span><span class="v">('+f2(w[0])+', '+f2(w[1])+')</span></div>';
+      vd.textContent='加法：平行四边形法则。把 v 平移到 u 的末端，从原点连过去就是 u+v——坐标上就是两个分量各自相加。';
+    }else if(op==='sub'){
+      const w=[u[0]-v[0], u[1]-v[1]];
+      const wP=p2(w[0],w[1]);
+      const nv=p2(-v[0],-v[1]);
+      arrow2(o,nv,'#6fa8d6',2.2,'−v',[0,18]);
+      seg(nv,wP,'#6fa8d6',1.6,[6,4],.7);
+      arrow2(o,wP,'#c86bd8',3.4,'u−v = ('+f2(w[0])+', '+f2(w[1])+')',[0,-20]);
+      // u 到 v 末端的连线（u-v 也可看成从 v 指向 u）
+      seg(vP,uP,'#7fa86b',1.8,[5,4],.8);
+      dotat(wP,'#c86bd8',4.5);
+      html='<div class="row"><span class="k">u</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
+           '<div class="row"><span class="k">v</span><span class="v">('+f2(v[0])+', '+f2(v[1])+')</span></div>'+
+           '<div class="row"><span class="k">u−v = u+(−v)</span><span class="v">('+f2(w[0])+', '+f2(w[1])+')</span></div>'+
+           '<div class="row"><span class="k">也从 v 的末端指向 u 的末端</span><span class="v">同样是 ('+f2(w[0])+', '+f2(w[1])+')</span></div>';
+      vd.textContent='减法：u−v = u + (−v)。几何上就是从 v 的末端连到 u 的末端，方向指向 u。';
+    }else if(op==='mul'){
+      const w=[u[0]*K, u[1]*K];
+      const wP=p2(w[0],w[1]);
+      seg(o,wP,'#c86bd8',3.4,null,.95);
+      arrow2(o,wP,'#c86bd8',3.4,'k·u = ('+f2(w[0])+', '+f2(w[1])+')',[0,K<0?18:-20]);
+      html='<div class="row"><span class="k">u</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
+           '<div class="row"><span class="k">k</span><span class="v">'+f2(K)+'</span></div>'+
+           '<div class="row"><span class="k">|k| · |u|</span><span class="v">'+(Math.abs(K)*len(u)).toFixed(3)+'</span></div>'+
+           '<div class="row"><span class="k">k·u（逐分量乘）</span><span class="v">('+f2(w[0])+', '+f2(w[1])+')</span></div>'+
+           '<div class="row"><span class="k">方向</span><span class="v">'+(K>0?'与 u 同向':(K<0?'与 u 反向':'零向量（缩放为 0）'))+'</span></div>';
+      vd.textContent='数乘：只改长度、不改方向；k 为负时整根箭头掉头。坐标上就是每个分量都乘 k。';
+    }else{
+      const d=u[0]*v[0]+u[1]*v[1];
+      const lu=len(u), lv=len(v);
+      const cosA=lu*lv>1e-9? d/(lu*lv):0;
+      const ang=Math.acos(Math.max(-1,Math.min(1,cosA)))*180/Math.PI;
+      // v 在 u 上的投影
+      const un=norm([u[0],u[1],0]);
+      const ph=u[0]*v[0]+u[1]*v[1];
+      const projv=[un[0]*ph, un[1]*ph];
+      const pv=p2(projv[0],projv[1]);
+      seg(vP,pv,'#7fa86b',1.6,[5,4],.9);
+      arrow2(o,pv,'#7fa86b',2.6,'v 在 u 上的投影',[0,18]);
+      seg(pv,vP,'#7fa86b',1.4,[4,4],.55);
+      html='<div class="row"><span class="k">u = (x₁, y₁)</span><span class="v">('+f2(u[0])+', '+f2(u[1])+')</span></div>'+
+           '<div class="row"><span class="k">v = (x₂, y₂)</span><span class="v">('+f2(v[0])+', '+f2(v[1])+')</span></div>'+
+           '<div class="row"><span class="k">u·v = x₁x₂ + y₁y₂</span><span class="v">'+d.toFixed(3)+'</span></div>'+
+           '<div class="row"><span class="k">= |u||v|cosθ</span><span class="v">'+(lu*lv).toFixed(3)+' × '+cosA.toFixed(3)+'</span></div>'+
+           '<div class="row"><span class="k">夹角 θ</span><span class="v">'+ang.toFixed(1)+'°</span></div>'+
+           '<div class="row"><span class="k">结果是什么</span><span class="v">一个数，不是向量</span></div>';
+      vd.textContent=Math.abs(d)<1e-9 ? 'u·v = 0，说明两个向量垂直——这是判垂直最快的办法。'
+        : (d>0?'u·v > 0：夹角是锐角，两者大致同向。':'u·v < 0：夹角是钝角，两者大致反向。');
+    }
+    ro.innerHTML=html;
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,HT);
+    if(mode===0) scene1();
+    else if(mode===1) scene2();
+    else if(mode===2) scene3();
+    else scene4();
+  }
+
+  function bindSlider(id,vid,setter){
+    const el=document.getElementById(id), lab=document.getElementById(vid);
+    el.addEventListener('input',e=>{setter(+e.target.value); lab.textContent=(+e.target.value).toFixed(1); draw();});
+  }
+  bindSlider('x1','vx1',v=>P1=v);
+  bindSlider('x2','vx2',v=>Q1=v);
+  bindSlider('px','vpx',v=>Px=v);
+  bindSlider('py','vpy',v=>Py=v);
+  bindSlider('sx','vsx',v=>S3[0]=v);
+  bindSlider('sy','vsy',v=>S3[1]=v);
+  bindSlider('sz3','vsz3',v=>S3[2]=v);
+  bindSlider('ux','vux',v=>U[0]=v);
+  bindSlider('uy','vuy',v=>U[1]=v);
+  bindSlider('vx','vvx',v=>V[0]=v);
+  bindSlider('vy','vvy',v=>V[1]=v);
+  bindSlider('kk','vkk',v=>K=v);
+
+  document.querySelectorAll('.chip[data-k]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      el.classList.toggle('on');
+      const k=el.dataset.k;
+      if(k==='Q') showQ=el.classList.contains('on');
+      if(k==='BOX') showBox=el.classList.contains('on');
+      draw();
+    });
+  });
+  document.querySelectorAll('.chip[data-op]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      document.querySelectorAll('.chip[data-op]').forEach(x=>x.classList.remove('on'));
+      el.classList.add('on'); op=el.dataset.op;
+      document.getElementById('krow').style.display = op==='mul'?'':'none';
+      draw();
+    });
+  });
+  document.querySelectorAll('.tab').forEach(el=>{
+    el.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+      el.classList.add('on'); mode=+el.dataset.mode;
+      ['p0','p1','p2','p3'].forEach((p,i)=>document.getElementById(p).style.display = (i===mode?'':'none'));
+      draw();
+    });
+  });
+
+  // 三维拖动
+  let drag=false,lx=0,ly=0;
+  cv.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;});
+  window.addEventListener('mousemove',e=>{
+    if(!drag||mode!==2)return;
+    yaw+=(e.clientX-lx)*0.008; pitch=Math.max(-0.1,Math.min(1.3,pitch+(e.clientY-ly)*0.006));
+    lx=e.clientX;ly=e.clientY;draw();
+  });
+  window.addEventListener('mouseup',()=>drag=false);
+  cv.addEventListener('touchstart',e=>{drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;},{passive:true});
+  cv.addEventListener('touchmove',e=>{
+    if(!drag||mode!==2)return;
+    const t=e.touches[0];
+    yaw+=(t.clientX-lx)*0.008; pitch=Math.max(-0.1,Math.min(1.3,pitch+(t.clientY-ly)*0.006));
+    lx=t.clientX;ly=t.clientY;draw();if(e.cancelable)e.preventDefault();
+  },{passive:false});
+  cv.addEventListener('touchend',()=>drag=false);
+
+  window.addEventListener('resize',()=>{resize();draw();});
+  resize();draw();
+})();
+</script>
+</body>
+</html>
